@@ -4,19 +4,25 @@ routes/analytics.py
 Analytics endpoints — financial analysis for a user's transactions.
 All logic lives in models/ — this file is routes ONLY.
 
-Current endpoints:
-  GET /analytics/anomalies/{user_id}  ← anomaly detection
+Endpoints:
+  GET /analytics/anomalies/{user_id}         ← anomaly detection
+  GET /analytics/insights/{user_id}          ← spending insights
+  GET /analytics/recommendations/{user_id}   ← expense recommendations
 """
 
 import json
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query
 
-from models.anomaly_detector import AnomalyDetector
+from models.anomaly_detector  import AnomalyDetector
+from models.spending_insights  import SpendingInsights
+from models.expense_recommender import ExpenseRecommender
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
-_detector = AnomalyDetector()   # stateless — shared safely across requests
+_detector    = AnomalyDetector()    # stateless — shared safely
+_insights    = SpendingInsights()   # stateless — shared safely
+_recommender = ExpenseRecommender() # stateless — shared safely
 
 # ── Data loading helper (mock only) ──────────────────────────────────────────
 
@@ -80,5 +86,52 @@ def get_anomalies(
 
         return result
 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/insights/{user_id}")
+def get_insights(user_id: str):
+    """
+    Analyze a user's spending habits and surface actionable insights.
+
+    Returns 5 sections:
+      - spending_patterns    — peak day/hour, best day by category
+      - category_analysis    — breakdown, share, trend per category
+      - saving_opportunities — high-variance and high-frequency categories
+      - behavioral_insights  — impulse risk, daily velocity, savings ceiling
+      - recommendations      — ranked, actionable suggestions
+    """
+    try:
+        transactions = _get_transactions(user_id)
+        return _insights.analyze(transactions, user_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/recommendations/{user_id}")
+def get_recommendations(
+    user_id: str,
+    monthly_income: float = Query(
+        0,
+        description="Average monthly income in Rs. (0 = unknown, uses total spend as reference)",
+        ge=0,
+    ),
+):
+    """
+    Generate budget recommendations and saving strategies.
+
+    Returns 4 sections:
+      - budget_suggestions   — categories exceeding 20% of income with saving targets
+      - timing_optimization  — best day of week to make purchases per category
+      - saving_opportunities — categories that are overspent or trending up
+      - category_tips        — severity-scaled tips for any overspent category
+
+    Pass ?monthly_income=50000 for income-relative recommendations.
+    Without income, percentages are relative to total monthly spend.
+    """
+    try:
+        transactions = _get_transactions(user_id)
+        return _recommender.recommend(transactions, user_id, monthly_income)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
