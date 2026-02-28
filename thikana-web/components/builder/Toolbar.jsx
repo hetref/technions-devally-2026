@@ -37,6 +37,8 @@ import { clsx } from "clsx";
 
 import { convertJsonToHtml } from "@/lib/publish/jsonToHtml";
 import JSZip from "jszip";
+import { useAuth } from "@/hooks/useAuth";
+import { getPage, savePageData } from "@/lib/website-operations";
 
 // ─── SEO Modal ────────────────────────────────────────────────────────────────
 
@@ -48,34 +50,33 @@ function SEOModal({ siteId, pageId, onClose }) {
     description: '',
     keywords: '',
   });
+  
+  const { user } = useAuth();
+  const businessId = user?.uid;
 
   // Load existing SEO on open
   useEffect(() => {
-    if (!siteId || !pageId) return;
-    fetch(`/api/sites/${siteId}/pages/${pageId}`)
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        if (data?.page?.seo) {
-          setSeo(prev => ({ ...prev, ...data.page.seo }));
+    if (!siteId || !pageId || !businessId) return;
+    
+    getPage(businessId, siteId, pageId)
+      .then(page => {
+        if (page?.seo) {
+          setSeo(prev => ({ ...prev, ...page.seo }));
         }
         // Pre-fill title from page name if empty
-        if (!data?.page?.seo?.title && data?.page?.name) {
-          setSeo(prev => ({ ...prev, title: data.page.name }));
+        if (!page?.seo?.title && page?.name) {
+          setSeo(prev => ({ ...prev, title: page.name }));
         }
       })
-      .catch(() => {})
+      .catch((err) => console.error(err))
       .finally(() => setLoading(false));
-  }, [siteId, pageId]);
+  }, [siteId, pageId, businessId]);
 
   const handleSave = async () => {
+    if (!businessId) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/sites/${siteId}/pages/${pageId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ seo }),
-      });
-      if (!res.ok) throw new Error('Failed to save SEO');
+      await savePageData(businessId, siteId, pageId, { seo });
       onClose();
     } catch (error) {
       console.error('Error saving SEO:', error);
@@ -346,6 +347,9 @@ function PublishSuccessBanner({ result, onClose }) {
 // ─── Main Toolbar ─────────────────────────────────────────────────────────────
 
 export default function Toolbar({ saving: autoSaving, lastSaved, saveError, tenantId }) {
+  const { user } = useAuth();
+  const businessId = user?.uid;
+  
   const { devicePreview, setDevicePreview } = useUIStore();
   const { canUndo, canRedo, undo, redo } = useHistoryStore();
   const { getLayoutJSON, updateLayoutJSON, siteId, pageId, getPageLayout } =
@@ -377,21 +381,17 @@ export default function Toolbar({ saving: autoSaving, lastSaved, saveError, tena
     const { siteId, pageId, layoutJSON, currentPageId } = store;
 
     // ── DB-backed save ──────────────────────────────────────────────────────
-    if (siteId && pageId) {
+    if (businessId && siteId && pageId) {
       setIsSaving(true);
       setSaveStatus(null);
       try {
         const page = layoutJSON?.pages?.find((p) => p.id === currentPageId);
-        const res = await fetch(`/api/sites/${siteId}/pages/${pageId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        await savePageData(businessId, siteId, pageId, {
             layout: page?.layout ?? [],
             name: page?.name,
             seo: page?.seo,
-          }),
         });
-        if (!res.ok) throw new Error((await res.json()).error || "Save failed");
+
         setSaveStatus("saved");
         setTimeout(() => setSaveStatus(null), 3000);
       } catch (err) {
@@ -410,7 +410,7 @@ export default function Toolbar({ saving: autoSaving, lastSaved, saveError, tena
       try {
         if (typeof window !== "undefined") {
           localStorage.setItem(
-            "sitepilot_builder_v2",
+            "Thikana_builder_v2",
             JSON.stringify(fallbackLayout)
           );
         }
@@ -436,7 +436,7 @@ export default function Toolbar({ saving: autoSaving, lastSaved, saveError, tena
       const zip = new JSZip();
 
       // Convert layout to html/css/js
-      // If the website has multiple pages we would ideally iterate, but sitepilot mostly handles 1 active page or you just loop.
+      // If the website has multiple pages we would ideally iterate, but Thikana mostly handles 1 active page or you just loop.
       // We will loop over layoutJSON.pages instead of just one.
       
       for (const page of layoutJSON.pages) {
@@ -504,7 +504,7 @@ export default function Toolbar({ saving: autoSaving, lastSaved, saveError, tena
                 PAGE BUILDER
               </p>
               <h1 className="text-xl font-black text-[#1d2321] uppercase tracking-tighter leading-none">
-                SitePilot
+                Thikana
               </h1>
             </div>
           </div>

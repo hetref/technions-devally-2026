@@ -19,7 +19,7 @@ import { nanoid } from "nanoid";
 // LOCAL STORAGE PERSISTENCE
 // ============================================================================
 
-const STORAGE_PREFIX = "sitepilot_chat_";
+const STORAGE_PREFIX = "Thikana_chat_";
 const MAX_STORED_MESSAGES = 50;
 const CONTEXT_MESSAGE_LIMIT = 20;
 

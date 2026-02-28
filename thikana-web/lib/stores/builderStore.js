@@ -19,7 +19,7 @@ import { produce } from "immer";
 // LOCAL STORAGE PERSISTENCE (v2 key to invalidate old section-based data)
 // ============================================================================
 
-const STORAGE_KEY = "sitepilot_builder_v2";                                                         
+const STORAGE_KEY = "Thikana_builder_v2";                                                         
 
 const saveToLocalStorage = (layoutJSON) => {
   try {
@@ -48,7 +48,7 @@ export const clearSavedState = () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem(STORAGE_KEY);
       // Also clear old v1 key
-      localStorage.removeItem("sitepilot_builder_state");
+      localStorage.removeItem("Thikana_builder_state");
     }
   } catch (e) {
     console.warn("Failed to clear localStorage:", e);
