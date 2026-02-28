@@ -648,33 +648,97 @@ const portfolioLayout = [
   },
 ];
 
+// ─── Template 3 — Restaurant ──────────────────────────────────────────────
+const restaurantLayout = [
+  { id: "tpl-rest-nav", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 0, verticalAlign: "center" }, styles: { paddingTop: 0, paddingBottom: 0 }, columns: [{ id: "tpl-rest-nav-c1", width: 12, components: [{ id: "tpl-rest-navbar", type: "Navbar", props: { logo: "Bistro", links: [{ label: "Menu", href: "#" }, { label: "Reservations", href: "#" }, { label: "Contact", href: "#" }] } }] }] },
+  { id: "tpl-rest-hero", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 24, verticalAlign: "center" }, styles: { paddingTop: 0, paddingBottom: 0 }, columns: [{ id: "tpl-rest-hero-c1", width: 12, components: [{ id: "tpl-rest-hero-comp", type: "Hero", props: { title: "Experience Fine Dining", subtitle: "Culinary excellence meets cozy atmosphere. Taste the difference.", ctaText: "Book a Table", ctaLink: "#reservations", backgroundImage: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=800&fit=crop" } }] }] },
+  { id: "tpl-rest-feat", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 24, verticalAlign: "stretch" }, styles: { paddingTop: 60, paddingBottom: 60 }, columns: [{ id: "tpl-rest-feat-c1", width: 12, components: [{ id: "tpl-rest-feat-comp", type: "Features", props: { title: "Our Specialties", items: [{title:"Fresh Ingredients", description:"Locally sourced everyday.", icon: "🥗"}, {title:"Expert Chefs", description:"Masterfully crafted dishes.", icon: "👨‍🍳"}, {title:"Curated Wine", description:"Perfect pairings for your meal.", icon: "🍷"}] } }] }] },
+  { id: "tpl-rest-cta", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 16, verticalAlign: "center" }, styles: { paddingTop: 0, paddingBottom: 0 }, columns: [{ id: "tpl-rest-cta-c1", width: 12, components: [{ id: "tpl-rest-cta-comp", type: "CTA", props: { title: "Join Us for Dinner", description: "Reserve your table today and let us treat you to an unforgettable night.", buttonText: "Make Reservation", buttonLink: "#reservations" } }] }] }
+];
+
+// ─── Template 4 — Photography ─────────────────────────────────────────────
+const photographyLayout = [
+  { id: "tpl-photo-nav", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 0, verticalAlign: "center" }, styles: { paddingTop: 0, paddingBottom: 0 }, columns: [{ id: "tpl-photo-nav-c1", width: 12, components: [{ id: "tpl-photo-navbar", type: "Navbar", props: { logo: "Lens", links: [{ label: "Portfolio", href: "#" }, { label: "Services", href: "#" }, { label: "Contact", href: "#" }] } }] }] },
+  { id: "tpl-photo-hero", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 24, verticalAlign: "center" }, styles: { paddingTop: 0, paddingBottom: 0 }, columns: [{ id: "tpl-photo-hero-c1", width: 12, components: [{ id: "tpl-photo-hero-comp", type: "Hero", props: { title: "Capturing Memories", subtitle: "Professional photography for weddings, events, and portraits.", ctaText: "View Portfolio", ctaLink: "#portfolio", backgroundImage: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=1200&h=800&fit=crop" } }] }] },
+  { id: "tpl-photo-cta", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 16, verticalAlign: "center" }, styles: { paddingTop: 0, paddingBottom: 0 }, columns: [{ id: "tpl-photo-cta-c1", width: 12, components: [{ id: "tpl-photo-cta-comp", type: "CTA", props: { title: "Book a Session", description: "Let's create beautiful images together. Contact me for availability.", buttonText: "Get in Touch", buttonLink: "#contact" } }] }] }
+];
+
+// ─── Template 5 — SaaS Start ──────────────────────────────────────────────
+const saasLayout = [
+  { id: "tpl-saas-nav", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 0, verticalAlign: "center" }, styles: { paddingTop: 0, paddingBottom: 0 }, columns: [{ id: "tpl-saas-nav-c1", width: 12, components: [{ id: "tpl-saas-navbar", type: "Navbar", props: { logo: "FlowSync", links: [{ label: "Product", href: "#" }, { label: "Pricing", href: "#" }, { label: "Login", href: "#" }] } }] }] },
+  { id: "tpl-saas-hero", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 24, verticalAlign: "center" }, styles: { paddingTop: 0, paddingBottom: 0 }, columns: [{ id: "tpl-saas-hero-c1", width: 12, components: [{ id: "tpl-saas-hero-comp", type: "Hero", props: { title: "Supercharge Your Workflow", subtitle: "The ultimate tool for modern teams to collaborate and ship faster.", ctaText: "Start 14-Day Free Trial", ctaLink: "#" }, styles: { } }] }] },
+  { id: "tpl-saas-feat", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 24, verticalAlign: "stretch" }, styles: { paddingTop: 60, paddingBottom: 60 }, columns: [{ id: "tpl-saas-feat-c1", width: 12, components: [{ id: "tpl-saas-feat-comp", type: "Features", props: { title: "Why Choose FlowSync", items: [{title:"Real-time Sync", description:"Instant updates across all devices.", icon: "⚡"}, {title:"Advanced Analytics", description:"Deep insights into your productivity.", icon: "📊"}, {title:"Bank-grade Security", description:"Your data is always protected.", icon: "🔒"}] }, styles: { } }] }] },
+  { id: "tpl-saas-cta", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 16, verticalAlign: "center" }, styles: { paddingTop: 0, paddingBottom: 0 }, columns: [{ id: "tpl-saas-cta-c1", width: 12, components: [{ id: "tpl-saas-cta-comp", type: "CTA", props: { title: "Ready to accelerate?", description: "Join 5,000+ teams already using FlowSync.", buttonText: "Get Started Now", buttonLink: "#" }, styles: { } }] }] }
+];
+
+// ─── Template 6 — E-commerce ─────────────────────────────────────────────
+const ecommerceLayout = [
+  { id: "tpl-ecom-nav", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 0, verticalAlign: "center" }, styles: { paddingTop: 0, paddingBottom: 0 }, columns: [{ id: "tpl-ecom-nav-c1", width: 12, components: [{ id: "tpl-ecom-navbar", type: "Navbar", props: { logo: "Luxe", links: [{ label: "Shop", href: "#" }, { label: "Collections", href: "#" }, { label: "Cart (0)", href: "#" }] } }] }] },
+  { id: "tpl-ecom-hero", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 24, verticalAlign: "center" }, styles: { paddingTop: 0, paddingBottom: 0 }, columns: [{ id: "tpl-ecom-hero-c1", width: 12, components: [{ id: "tpl-ecom-hero-comp", type: "Hero", props: { title: "Summer Collection", subtitle: "Discover the latest trends and redefine your style this season.", ctaText: "Shop the Collection", ctaLink: "#shop", backgroundImage: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=1200&h=800&fit=crop" } }] }] },
+  { id: "tpl-ecom-feat", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 24, verticalAlign: "stretch" }, styles: { paddingTop: 60, paddingBottom: 60 }, columns: [{ id: "tpl-ecom-feat-c1", width: 12, components: [{ id: "tpl-ecom-feat-comp", type: "Features", props: { title: "Customer Promises", items: [{title:"Free Shipping", description:"On all orders over $100.", icon: "🚚"}, {title:"Easy Returns", description:"30-day money-back guarantee.", icon: "🔄"}, {title:"24/7 Support", description:"Always here to help.", icon: "💬"}] } }] }] },
+  { id: "tpl-ecom-cta", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 16, verticalAlign: "center" }, styles: { paddingTop: 0, paddingBottom: 0 }, columns: [{ id: "tpl-ecom-cta-c1", width: 12, components: [{ id: "tpl-ecom-cta-comp", type: "CTA", props: { title: "Join Our Newsletter", description: "Get 10% off your first order and exclusive access to sales.", buttonText: "Subscribe", buttonLink: "#" } }] }] }
+];
+
+// ─── Template 7 — Event ──────────────────────────────────────────────────
+const eventLayout = [
+  { id: "tpl-event-nav", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 0, verticalAlign: "center" }, styles: { paddingTop: 0, paddingBottom: 0 }, columns: [{ id: "tpl-event-nav-c1", width: 12, components: [{ id: "tpl-event-navbar", type: "Navbar", props: { logo: "DevCon '26", links: [{ label: "Speakers", href: "#" }, { label: "Schedule", href: "#" }, { label: "Tickets", href: "#" }] }, styles: { backgroundColor: "#1e1e2f", textColor: "#ffffff" } }] }] },
+  { id: "tpl-event-hero", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 24, verticalAlign: "center" }, styles: { paddingTop: 0, paddingBottom: 0 }, columns: [{ id: "tpl-event-hero-c1", width: 12, components: [{ id: "tpl-event-hero-comp", type: "Hero", props: { title: "The Ultimate Developer Conference", subtitle: "August 15-17, 2026 • San Francisco, CA. Join thousands of developers worldwide.", ctaText: "Get Tickets Now", ctaLink: "#tickets", backgroundImage: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=800&fit=crop" } }] }] },
+  { id: "tpl-event-feat", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 24, verticalAlign: "stretch" }, styles: { paddingTop: 60, paddingBottom: 60 }, columns: [{ id: "tpl-event-feat-c1", width: 12, components: [{ id: "tpl-event-feat-comp", type: "Features", props: { title: "Why Attend?", items: [{title:"Expert Speakers", description:"Learn from industry leaders.", icon: "🎤"}, {title:"Workshops", description:"Hands-on coding sessions.", icon: "💻"}, {title:"Networking", description:"Connect with peers and sponsors.", icon: "🤝"}] } }] }] },
+  { id: "tpl-event-cta", type: "container", settings: { direction: "horizontal", contentWidth: "boxed", maxWidth: 1280, gap: 16, verticalAlign: "center" }, styles: { paddingTop: 0, paddingBottom: 0 }, columns: [{ id: "tpl-event-cta-c1", width: 12, components: [{ id: "tpl-event-cta-comp", type: "CTA", props: { title: "Don't Miss Out", description: "Early bird tickets are almost gone. Secure your spot today!", buttonText: "Buy Tickets", buttonLink: "#tickets" } }] }] }
+];
+
 // ─── Exports ────────────────────────────────────────────────────────────────
 
 export const templatePresets = [
   {
     id: "landing-page",
     name: "Landing Page",
-    description:
-      "A complete marketing landing page with hero, features, call-to-action and footer sections.",
-    preview: {
-      icon: "layout",
-      sections: ["Navbar", "Hero", "Features", "CTA", "Footer"],
-      color: "#3b82f6",
-    },
+    description: "A complete marketing landing page with hero, features, call-to-action and footer sections.",
+    preview: { icon: "layout", sections: ["Navbar", "Hero", "Features", "CTA", "Footer"], color: "#3b82f6" },
     layout: landingPageLayout,
   },
   {
     id: "portfolio",
     name: "Portfolio",
-    description:
-      "A creative portfolio page with intro, project gallery, about section and contact CTA.",
-    preview: {
-      icon: "user",
-      sections: ["Navbar", "Intro", "Gallery", "About", "CTA", "Footer"],
-      color: "#8b5cf6",
-    },
+    description: "A creative portfolio page with intro, project gallery, about section and contact CTA.",
+    preview: { icon: "user", sections: ["Navbar", "Intro", "Gallery", "About", "CTA", "Footer"], color: "#8b5cf6" },
     layout: portfolioLayout,
   },
+  {
+    id: "restaurant",
+    name: "Restaurant",
+    description: "A cozy and elegant layout for restaurants or cafes featuring a hero section, menu highlights, and reservations.",
+    preview: { icon: "layout", sections: ["Navbar", "Hero", "Features", "CTA"], color: "#f59e0b" },
+    layout: restaurantLayout,
+  },
+  {
+    id: "photography",
+    name: "Photography",
+    description: "A visual-heavy layout perfect for photographers, designers, and creatives to showcase their work.",
+    preview: { icon: "layout", sections: ["Navbar", "Hero", "CTA"], color: "#ec4899" },
+    layout: photographyLayout,
+  },
+  {
+    id: "saas",
+    name: "SaaS Startup",
+    description: "A modern dark-themed landing page designed to highlight software products and convert visitors.",
+    preview: { icon: "layout", sections: ["Navbar", "Hero", "Features", "CTA"], color: "#8b5cf6" },
+    layout: saasLayout,
+  },
+  {
+    id: "ecommerce",
+    name: "E-Commerce",
+    description: "A vibrant storefront layout to feature new arrivals, perks, and newsletter signups.",
+    preview: { icon: "layout", sections: ["Navbar", "Hero", "Features", "CTA"], color: "#10b981" },
+    layout: ecommerceLayout,
+  },
+  {
+    id: "event",
+    name: "Event & Conference",
+    description: "An exciting layout perfectly suited for promoting tech conferences, webinars, and events.",
+    preview: { icon: "layout", sections: ["Navbar", "Hero", "Features", "CTA"], color: "#ef4444" },
+    layout: eventLayout,
+  }
 ];
 
 /**
