@@ -485,11 +485,13 @@ export default function UserProfile() {
 
         return (
             <div className="space-y-4">
-                {posts.map((post) => (
-                    <div key={post.id} className="w-full">
-                        <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} />
-                    </div>
-                ))}
+                <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                    {posts.map((post) => (
+                        <div key={post.id} className="w-full">
+                            <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} compact />
+                        </div>
+                    ))}
+                </div>
                 {hasMore && (
                     <div className="flex justify-center pt-4">
                         <Button

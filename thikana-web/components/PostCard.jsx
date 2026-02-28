@@ -54,7 +54,7 @@ import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import useLikePost from "@/hooks/useLikePosts";
 
-function PostCard({ post, onView, showDistance, distanceText }) {
+function PostCard({ post, onView, showDistance, distanceText, compact = false }) {
   const [isLikeProcessing, setIsLikeProcessing] = useState(false);
   const [showCommentBox, setShowCommentBox] = useState(false);
   const [comment, setComment] = useState("");
@@ -169,7 +169,7 @@ function PostCard({ post, onView, showDistance, distanceText }) {
     try {
       const commentsRef = collection(db, "posts", postId, "comments");
       const commentsSnapshot = await getDocs(commentsRef);
-      
+
       const allComments = [];
       commentsSnapshot.forEach((doc) => {
         const data = doc.data();
@@ -195,7 +195,7 @@ function PostCard({ post, onView, showDistance, distanceText }) {
 
   const formatTimeAgo = (timestamp) => {
     if (!timestamp) return "now";
-    
+
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     const now = new Date();
     const diffInSeconds = Math.floor((now - date) / 1000);
@@ -275,7 +275,7 @@ function PostCard({ post, onView, showDistance, distanceText }) {
     e.preventDefault();
     const newShowState = !showCommentBox;
     setShowCommentBox(newShowState);
-    
+
     if (newShowState) {
       loadComments();
     }
@@ -431,15 +431,15 @@ function PostCard({ post, onView, showDistance, distanceText }) {
             <div className="flex gap-4">
               <div className="relative">
                 <Avatar className="h-14 w-14 ring-2 ring-blue-100 transition-all duration-300 hover:ring-blue-300">
-                <AvatarImage
-                  src={post?.authorProfileImage || "/default-avatar.png"}
-                  alt={post?.authorName || "User"}
+                  <AvatarImage
+                    src={post?.authorProfileImage || "/default-avatar.png"}
+                    alt={post?.authorName || "User"}
                     className="transition-transform duration-300 hover:scale-105"
-                />
+                  />
                   <AvatarFallback className="text-lg font-semibold bg-gradient-to-br from-blue-400 to-purple-500 text-white">
-                  {(post?.authorName || "U").substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+                    {(post?.authorName || "U").substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 border-2 border-white rounded-full animate-pulse"></div>
               </div>
               <div>
@@ -461,13 +461,13 @@ function PostCard({ post, onView, showDistance, distanceText }) {
               <div className="text-sm text-gray-600 font-medium px-3 py-1 bg-gray-100 rounded-full">
                 {post?.createdAt
                   ? new Date(
-                      typeof post.createdAt === "object" && post.createdAt.toDate
-                        ? post.createdAt.toDate()
-                        : post.createdAt
-                    ).toLocaleDateString()
+                    typeof post.createdAt === "object" && post.createdAt.toDate
+                      ? post.createdAt.toDate()
+                      : post.createdAt
+                  ).toLocaleDateString()
                   : ""}
               </div>
-              
+
               {showDistance && distanceText && (
                 <div className="flex items-center text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full font-medium">
                   <MapPin className="h-4 w-4 mr-1" />
@@ -510,7 +510,7 @@ function PostCard({ post, onView, showDistance, distanceText }) {
             <h3 className="font-bold text-xl text-gray-800 leading-relaxed">
               {post?.title || post?.caption || ""}
             </h3>
-            {(() => {
+            {!compact && (() => {
               const text =
                 post?.content || post?.description || "No description";
               const WORD_LIMIT = 30;
@@ -570,125 +570,127 @@ function PostCard({ post, onView, showDistance, distanceText }) {
           </div>
 
           {/* Post Stats */}
-          <div className="flex items-center justify-between mt-8 text-base">
+          {!compact && (
+            <div className="flex items-center justify-between mt-8 text-base">
               <Button
                 variant="ghost"
-              size="lg"
-              className="group hover:bg-red-50 transition-all duration-300 rounded-2xl px-6 py-3"
+                size="lg"
+                className="group hover:bg-red-50 transition-all duration-300 rounded-2xl px-6 py-3"
                 onClick={handleLike}
                 disabled={isUpdating}
               >
-              <div className="flex items-center gap-3">
-                <Heart 
-                  className={`w-6 h-6 transition-all duration-300 group-hover:scale-110 ${
-                    isLiked 
-                      ? "fill-current text-red-500" 
+                <div className="flex items-center gap-3">
+                  <Heart
+                    className={`w-6 h-6 transition-all duration-300 group-hover:scale-110 ${isLiked
+                      ? "fill-current text-red-500"
                       : "text-gray-600 group-hover:text-red-500"
-                  }`} 
-                />
-                <span className={`font-semibold ${isLiked ? "text-red-500" : "text-gray-700 group-hover:text-red-500"}`}>
-                  {likes || 0} Likes
-                </span>
+                      }`}
+                  />
+                  <span className={`font-semibold ${isLiked ? "text-red-500" : "text-gray-700 group-hover:text-red-500"}`}>
+                    {likes || 0} Likes
+                  </span>
                 </div>
               </Button>
-            
-            <Button
-              variant="ghost"
-              size="lg"
-              className="group hover:bg-blue-50 transition-all duration-300 rounded-2xl px-6 py-3"
-              onClick={handleCommentClick}
-            >
-              <div className="flex items-center gap-3">
-                <MessageCircle className="w-6 h-6 text-gray-600 group-hover:text-blue-500 transition-all duration-300 group-hover:scale-110" />
-                <span className="font-semibold text-gray-700 group-hover:text-blue-500">
-                  {commentsCount} Comments
-                </span>
-              </div>
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="lg"
-              className="group hover:bg-green-50 transition-all duration-300 rounded-2xl px-6 py-3"
-            >
-              <div className="flex items-center gap-3">
-                <Share2 className="w-6 h-6 text-gray-600 group-hover:text-green-500 transition-all duration-300 group-hover:scale-110" />
-                <span className="font-semibold text-gray-700 group-hover:text-green-500">
-                  187 Share
-                </span>
-            </div>
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="lg"
-              className="group hover:bg-yellow-50 transition-all duration-300 rounded-2xl px-6 py-3"
-              onClick={handleSave}
-              disabled={isSaveProcessing}
-            >
-              <div className="flex items-center gap-3">
-                <Bookmark 
-                  className={`w-6 h-6 transition-all duration-300 group-hover:scale-110 ${
-                    isSaved 
-                      ? "fill-current text-yellow-500" 
+
+              <Button
+                variant="ghost"
+                size="lg"
+                className="group hover:bg-blue-50 transition-all duration-300 rounded-2xl px-6 py-3"
+                onClick={handleCommentClick}
+              >
+                <div className="flex items-center gap-3">
+                  <MessageCircle className="w-6 h-6 text-gray-600 group-hover:text-blue-500 transition-all duration-300 group-hover:scale-110" />
+                  <span className="font-semibold text-gray-700 group-hover:text-blue-500">
+                    {commentsCount} Comments
+                  </span>
+                </div>
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="lg"
+                className="group hover:bg-green-50 transition-all duration-300 rounded-2xl px-6 py-3"
+              >
+                <div className="flex items-center gap-3">
+                  <Share2 className="w-6 h-6 text-gray-600 group-hover:text-green-500 transition-all duration-300 group-hover:scale-110" />
+                  <span className="font-semibold text-gray-700 group-hover:text-green-500">
+                    187 Share
+                  </span>
+                </div>
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="lg"
+                className="group hover:bg-yellow-50 transition-all duration-300 rounded-2xl px-6 py-3"
+                onClick={handleSave}
+                disabled={isSaveProcessing}
+              >
+                <div className="flex items-center gap-3">
+                  <Bookmark
+                    className={`w-6 h-6 transition-all duration-300 group-hover:scale-110 ${isSaved
+                      ? "fill-current text-yellow-500"
                       : "text-gray-600 group-hover:text-yellow-500"
-                  }`} 
-                />
-                <span className={`font-semibold ${isSaved ? "text-yellow-500" : "text-gray-700 group-hover:text-yellow-500"}`}>
-                  {isSaved ? "Saved" : "Save"}
-                </span>
-              </div>
-            </Button>
-          </div>
+                      }`}
+                  />
+                  <span className={`font-semibold ${isSaved ? "text-yellow-500" : "text-gray-700 group-hover:text-yellow-500"}`}>
+                    {isSaved ? "Saved" : "Save"}
+                  </span>
+                </div>
+              </Button>
+            </div>
+          )}
 
           {/* Comment Input */}
-          <div className="flex items-center gap-4 mt-8 pt-6 border-t-2 border-gray-100">
-            <Avatar className="w-12 h-12 ring-2 ring-gray-200">
-              <AvatarImage 
-                src={currentUserProfile?.profilePic || currentUserProfile?.profileImage || auth.currentUser?.photoURL || "/default-avatar.png"} 
-                alt={currentUserProfile?.name || currentUserProfile?.username || "User"}
-              />
-              <AvatarFallback className="bg-gradient-to-br from-gray-400 to-gray-600 text-white font-semibold">
-                {(currentUserProfile?.name || currentUserProfile?.username || "U").substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <form onSubmit={handleSubmitComment} className="flex gap-3 flex-1">
-              <Input
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Write your comment..."
-                className="flex-1 rounded-2xl px-6 py-4 border-2 border-gray-200 focus:border-blue-400 text-base transition-all duration-300 bg-gray-50 focus:bg-white"
-              />
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="w-12 h-12 hover:bg-gray-100 rounded-2xl transition-all duration-300 hover:scale-105" 
-                type="button"
-              >
-                <Paperclip className="w-6 h-6 text-gray-500 hover:text-gray-700" />
-                <span className="sr-only">Attach file</span>
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="w-12 h-12 hover:bg-yellow-100 rounded-2xl transition-all duration-300 hover:scale-105" 
-                type="button"
-              >
-                <Smile className="w-6 h-6 text-gray-500 hover:text-yellow-500" />
-                <span className="sr-only">Add emoji</span>
-              </Button>
-              <Button
-                type="submit"
-                variant="ghost"
-                size="icon"
-                className="w-12 h-12 hover:bg-blue-100 rounded-2xl transition-all duration-300 hover:scale-105 disabled:opacity-50"
-                disabled={!comment.trim() || isSubmitting}
-              >
-                <Send className={`w-6 h-6 transition-colors duration-300 ${comment.trim() ? "text-blue-500" : "text-gray-400"}`} />
-                <span className="sr-only">Send comment</span>
-              </Button>
-            </form>
-          </div>
+          {!compact && (
+            <div className="flex items-center gap-4 mt-8 pt-6 border-t-2 border-gray-100">
+              <Avatar className="w-12 h-12 ring-2 ring-gray-200">
+                <AvatarImage
+                  src={currentUserProfile?.profilePic || currentUserProfile?.profileImage || auth.currentUser?.photoURL || "/default-avatar.png"}
+                  alt={currentUserProfile?.name || currentUserProfile?.username || "User"}
+                />
+                <AvatarFallback className="bg-gradient-to-br from-gray-400 to-gray-600 text-white font-semibold">
+                  {(currentUserProfile?.name || currentUserProfile?.username || "U").substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <form onSubmit={handleSubmitComment} className="flex gap-3 flex-1">
+                <Input
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Write your comment..."
+                  className="flex-1 rounded-2xl px-6 py-4 border-2 border-gray-200 focus:border-blue-400 text-base transition-all duration-300 bg-gray-50 focus:bg-white"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-12 h-12 hover:bg-gray-100 rounded-2xl transition-all duration-300 hover:scale-105"
+                  type="button"
+                >
+                  <Paperclip className="w-6 h-6 text-gray-500 hover:text-gray-700" />
+                  <span className="sr-only">Attach file</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-12 h-12 hover:bg-yellow-100 rounded-2xl transition-all duration-300 hover:scale-105"
+                  type="button"
+                >
+                  <Smile className="w-6 h-6 text-gray-500 hover:text-yellow-500" />
+                  <span className="sr-only">Add emoji</span>
+                </Button>
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  size="icon"
+                  className="w-12 h-12 hover:bg-blue-100 rounded-2xl transition-all duration-300 hover:scale-105 disabled:opacity-50"
+                  disabled={!comment.trim() || isSubmitting}
+                >
+                  <Send className={`w-6 h-6 transition-colors duration-300 ${comment.trim() ? "text-blue-500" : "text-gray-400"}`} />
+                  <span className="sr-only">Send comment</span>
+                </Button>
+              </form>
+            </div>
+          )}
 
           {/* Enhanced Comments Section */}
           {showCommentBox && (
@@ -784,14 +786,14 @@ function PostCard({ post, onView, showDistance, distanceText }) {
             </div>
           </div>
           <AlertDialogFooter className="gap-3">
-            <AlertDialogCancel 
+            <AlertDialogCancel
               disabled={isEditing}
               className="px-6 py-3 rounded-xl text-base font-semibold"
             >
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleEditPost} 
+            <AlertDialogAction
+              onClick={handleEditPost}
               disabled={isEditing}
               className="px-6 py-3 rounded-xl text-base font-semibold bg-blue-500 hover:bg-blue-600"
             >
@@ -812,7 +814,7 @@ function PostCard({ post, onView, showDistance, distanceText }) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-3">
-            <AlertDialogCancel 
+            <AlertDialogCancel
               disabled={isDeleting}
               className="px-6 py-3 rounded-xl text-base font-semibold"
             >
