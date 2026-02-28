@@ -71,7 +71,7 @@ export function SignUpForm() {
                     email,
                     phone,
                     role: "user",
-                    username: `${firstName.toLowerCase()}-${lastName.toLowerCase()}-${Math.floor(Math.random() * 90000) + 10000}`,
+                    username: `${firstName.toLowerCase().replace(/[^a-z0-9]/g, '')}-${lastName.toLowerCase().replace(/[^a-z0-9]/g, '')}-${Math.floor(Math.random() * 90000) + 10000}`,
                     profilePic: "https://via.placeholder.com/600x600",
                     plan: "free",
                     uid,
