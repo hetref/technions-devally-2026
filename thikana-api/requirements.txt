@@ -3,3 +3,4 @@ uvicorn[standard]
 pygeohash
 python-dotenv
 pydantic>=2.0
+firebase-admin
