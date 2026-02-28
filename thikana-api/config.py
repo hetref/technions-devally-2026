@@ -7,7 +7,13 @@ Nothing else in the codebase needs to change for either.
 """
 
 # ── Data source ───────────────────────────────────────────────────────────────
-USE_MOCK: bool = True   # False → live Firebase
+USE_MOCK: bool = False  # True → mock JSON, False → live Firebase
+
+# ── Firebase ──────────────────────────────────────────────────────────────────
+# serviceAccountKey.json lives one folder up (in the Recommendation model/ root)
+import os
+from pathlib import Path
+KEY_PATH: str = str(Path(__file__).parent.parent / "serviceAccountKey.json")
 
 # ── Spatial settings ──────────────────────────────────────────────────────────
 MAX_RADIUS_KM: float = 10.0          # businesses beyond this are ignored
