@@ -118,7 +118,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3] text-[#1A1A1A] font-sans pb-24 selection:bg-[#1A1A1A] selection:text-white">
+    <div className="min-h-screen bg-[#F7F6F3] text-[#1A1A1A] font-sans selection:bg-[#1A1A1A] selection:text-white">
 
       {/* ── NAVBAR ─────────────────────────────────────────────── */}
       <Navbar />
