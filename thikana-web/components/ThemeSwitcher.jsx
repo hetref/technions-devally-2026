@@ -7,7 +7,10 @@ import { Sun, Moon, Monitor } from 'lucide-react'
 export default function ThemeSwitcher() {
     const { theme, setTheme } = useTheme()
     const [isOpen, setIsOpen] = useState(false)
-    const [position, setPosition] = useState({ x: window.innerWidth - 80, y: window.innerHeight - 80 })
+    const [isMounted, setIsMounted] = useState(false)
+
+    // Default fallback position for SSR, will be immediately overwritten on mount
+    const [position, setPosition] = useState({ x: 0, y: 0 })
     const [isDragging, setIsDragging] = useState(false)
 
     // Determine which corner we are closest to
@@ -17,11 +20,15 @@ export default function ThemeSwitcher() {
     const buttonRef = useRef(null)
     const dragInfo = useRef({ startX: 0, startY: 0, initialX: 0, initialY: 0, hasMoved: false })
 
-    // Initialize position and handle window resize
+    // Initialize position and handle window resize ONLY on client side
     useEffect(() => {
+        setIsMounted(true)
         const handleResize = () => {
             snapToCorner(position.x, position.y)
         }
+
+        // Initial set position using window now that we are on the client
+        setPosition({ x: window.innerWidth - 80, y: window.innerHeight - 80 })
 
         // Initial snap to bottom right on mount
         snapToCorner(window.innerWidth, window.innerHeight)
@@ -169,6 +176,8 @@ export default function ThemeSwitcher() {
 
     const { menuPosition, animationOrigin, flexAlign } = getMenuLayoutClasses()
 
+    if (!isMounted) return null;
+
     return (
         <div
             ref={menuRef}
@@ -176,7 +185,7 @@ export default function ThemeSwitcher() {
             style={{
                 left: `${position.x}px`,
                 top: `${position.y}px`,
-                // Make transition completely instantaneous if actively dragging to prevent lag feel, 
+                // Make transition completely instantaneous if actively dragging to prevent lag feel,
                 // but smooth if we just finished dragging and it is snapping into place
                 transition: isDragging ? 'none' : 'left 0.4s cubic-bezier(0.16, 1, 0.3, 1), top 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
             }}
