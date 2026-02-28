@@ -1305,7 +1305,7 @@ export default function Profile() {
                                                                 </div>
                                                                 {isCurrentUser && (
                                                                     <Button asChild className="rounded-full shadow-lg h-auto py-3 px-6">
-                                                                        <Link href="/my-location">
+                                                                        <Link href="/map">
                                                                             <MapPinIcon className="w-4 h-4 mr-2" />
                                                                             Add Your Location
                                                                         </Link>

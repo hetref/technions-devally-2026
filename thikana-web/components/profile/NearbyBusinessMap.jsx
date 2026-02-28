@@ -71,26 +71,43 @@ export default function NearbyBusinessMap({ height = "400px", width = "100%", ca
       }
 
       try {
-        // Fetch user location
+        // Try to get location from user document first
+        let userLoc = null;
         console.log("Fetching user location...");
         const userDoc = await getDoc(doc(db, "users", currentUserId));
-        if (!userDoc.exists()) {
-          console.log("User document not found");
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const loc = userData.location || userData._geoloc;
+          if (loc) {
+            userLoc = {
+              lat: loc.latitude ?? loc.lat,
+              lng: loc.longitude ?? loc.lng,
+            };
+          }
+        }
+
+        // Fallback: use browser geolocation if user doc has no location
+        if (!userLoc) {
+          console.log("No location in user document, using browser geolocation...");
+          try {
+            const pos = await new Promise((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+              });
+            });
+            userLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          } catch (geoErr) {
+            console.warn("Browser geolocation failed:", geoErr.message);
+          }
+        }
+
+        if (!userLoc) {
+          console.log("No location available from any source");
           return;
         }
 
-        const userData = userDoc.data();
-        console.log("User data:", userData);
-
-        if (!userData.location) {
-          console.log("No location data in user document");
-          return;
-        }
-
-        const userLoc = {
-          lat: userData.location.latitude,
-          lng: userData.location.longitude,
-        };
         console.log("User location:", userLoc);
         setUserLocation(userLoc);
 
@@ -112,24 +129,33 @@ export default function NearbyBusinessMap({ height = "400px", width = "100%", ca
             const plan = businessUserData?.plan || "free";
             console.log("Business plan for", businessDoc.id, ":", plan);
 
-            if (!businessData.location) {
+            const bizLoc = businessData.location || businessData._geoloc;
+            if (!bizLoc) {
               console.log("No location data for business:", businessDoc.id);
+              return null;
+            }
+
+            const bizLat = bizLoc.latitude ?? bizLoc.lat;
+            const bizLng = bizLoc.longitude ?? bizLoc.lng;
+
+            if (bizLat == null || bizLng == null) {
+              console.log("Invalid location coordinates for business:", businessDoc.id);
               return null;
             }
 
             const distance = calculateDistance(
               userLoc.lat,
               userLoc.lng,
-              businessData.location.latitude,
-              businessData.location.longitude
+              bizLat,
+              bizLng
             );
             console.log("Distance for", businessDoc.id, ":", distance, "km");
 
             // Check if business is within plan radius
             const radiusLimits = {
-              free: 2,
-              standard: 4,
-              premium: 8,
+              free: 5,
+              standard: 8,
+              premium: 10,
             };
 
             if (distance <= radiusLimits[plan]) {
@@ -140,8 +166,8 @@ export default function NearbyBusinessMap({ height = "400px", width = "100%", ca
                 business_plan: plan,
                 distance_km: distance,
                 location: {
-                  lat: businessData.location.latitude,
-                  lng: businessData.location.longitude,
+                  lat: bizLat,
+                  lng: bizLng,
                 },
               };
             }

@@ -180,7 +180,7 @@ export default function MapComponent({ location, name, address, isCurrentUser })
               variant="outline"
               className="rounded-full shadow-lg gap-2 font-semibold hover:scale-105 transition-transform bg-white hover:bg-gray-50 text-gray-700 border-gray-200 hidden sm:flex"
             >
-              <Link href="/my-location">
+              <Link href="/map">
                 <Pencil size={18} />
                 <span>Edit</span>
               </Link>
