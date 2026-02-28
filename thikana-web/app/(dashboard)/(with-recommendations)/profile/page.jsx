@@ -656,7 +656,7 @@ export default function Profile() {
                 <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                     {posts.map((post) => (
                         <div key={post.id} className="w-full">
-                            <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} compact />
+                            <PostCard post={post} onView={() => router.push(`/post/${post.id || post.postId}`)} compact />
                         </div>
                     ))}
                 </div>
@@ -705,7 +705,7 @@ export default function Profile() {
     const renderSavedPostCard = useCallback(
         (post) => (
             <div key={post.id} className="w-full">
-                <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} />
+                <PostCard post={post} onView={() => router.push(`/post/${post.id || post.postId}`)} />
             </div>
         ),
         [router]
@@ -1556,7 +1556,7 @@ export default function Profile() {
                                                             ) : (
                                                                 likedPosts.map((post, index) => (
                                                                     <div key={index} className="w-full">
-                                                                        <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} />
+                                                                        <PostCard post={post} onView={() => router.push(`/post/${post.id || post.postId}`)} />
                                                                     </div>
                                                                 ))
                                                             )}
@@ -2069,7 +2069,7 @@ export default function Profile() {
                                                             ) : (
                                                                 likedPosts.map((post, index) => (
                                                                     <div key={index} className="w-full">
-                                                                        <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} />
+                                                                        <PostCard post={post} onView={() => router.push(`/post/${post.id || post.postId}`)} />
                                                                     </div>
                                                                 ))
                                                             )}

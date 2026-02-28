@@ -284,7 +284,7 @@ function PostCard({ post, onView, showDistance, distanceText, compact = false })
   const handleViewComments = (e) => {
     e.stopPropagation();
     e.preventDefault();
-    router.push(`/feed/${post.postId}`);
+    router.push(`/post/${post.postId}`);
   };
 
   const handleSubmitComment = async (e) => {
