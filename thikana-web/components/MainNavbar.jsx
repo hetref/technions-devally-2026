@@ -268,7 +268,7 @@ const MainNavbar = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link href="#" className="flex items-center gap-2">
+                      <Link href="/posts/create" className="flex items-center gap-2">
                         <span>Create Post</span>
                       </Link>
                     </DropdownMenuItem>
