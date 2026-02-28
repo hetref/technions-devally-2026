@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from routes.feed import router as feed_router
 from routes.discovery import router as discovery_router
+from routes.analytics import router as analytics_router
 
 # ── App ───────────────────────────────────────────────────────────────────────
 
@@ -32,6 +33,7 @@ app.add_middleware(
 
 app.include_router(feed_router)
 app.include_router(discovery_router)
+app.include_router(analytics_router)
 
 # ── Health ────────────────────────────────────────────────────────────────────
 

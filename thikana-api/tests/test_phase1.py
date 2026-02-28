@@ -2,12 +2,18 @@
 tests/test_phase1.py
 
 All Phase 1 tests — run from the project root:
-  python -m pytest tests/ -v
+  python -m pytest tests/test_phase1.py -v
   OR
   python tests/test_phase1.py
 """
 
+# Force mock mode BEFORE any import that touches db/__init__.py
+# This lets tests run against mock data even when the server uses live Firebase.
+import config
+config.USE_MOCK = True
+
 from core import assembler
+
 
 
 def sep(title: str):
