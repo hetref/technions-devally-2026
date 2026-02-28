@@ -9,7 +9,7 @@ import { sendEmailVerification } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 import PostCardSkeleton from "@/components/PostCardSkeleton";
-import { MapPin, RefreshCw, AlertCircle, Compass, ArrowUp } from "lucide-react";
+import { MapPin, RefreshCw, AlertCircle, Compass, ArrowUp, TrendingUp, Flame } from "lucide-react";
 
 import { useFeed } from "@/hooks/useRecommendations";
 
@@ -50,12 +50,13 @@ const FeedPage = () => {
         };
         return (
             <div className="flex flex-col gap-4 justify-center items-center min-h-[500px]">
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-center max-w-md">
-                    <AlertCircle className="h-8 w-8 text-amber-500 mx-auto mb-2" />
-                    <p className="text-amber-800 font-medium">Please verify your email to continue</p>
+                <div className="p-6 bg-amber-50 border border-amber-200 rounded-2xl text-center max-w-md">
+                    <AlertCircle className="h-8 w-8 text-amber-500 mx-auto mb-3" />
+                    <p className="text-amber-800 font-semibold text-lg mb-1">Verify Your Email</p>
+                    <p className="text-amber-700 text-sm">Please verify your email address to start exploring your feed.</p>
                 </div>
-                <Button onClick={verifyEmailHandler} className="bg-orange-600 hover:bg-orange-700 rounded-xl">
-                    Verify Email
+                <Button onClick={verifyEmailHandler} className="bg-orange-600 hover:bg-orange-700 rounded-xl px-6">
+                    Send Verification Email
                 </Button>
             </div>
         );
@@ -73,7 +74,7 @@ const FeedPage = () => {
     if (locationDenied) {
         return (
             <div className="flex flex-col justify-center items-center min-h-[60vh] space-y-6 max-w-md mx-auto px-4">
-                <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl text-center">
+                <div className="p-8 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl text-center">
                     <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Compass className="h-8 w-8 text-blue-600" />
                     </div>
@@ -81,14 +82,9 @@ const FeedPage = () => {
                         Location Access Required
                     </h3>
                     <p className="text-sm text-gray-600 leading-relaxed mb-4">
-                        To show you posts from nearby businesses and personalized recommendations,
-                        we need access to your location. Your location data is only used to find
-                        relevant content near you.
+                        To show you posts from nearby businesses, we need access to your location.
                     </p>
-                    <Button
-                        onClick={handleManualRefresh}
-                        className="bg-blue-600 hover:bg-blue-700 rounded-xl"
-                    >
+                    <Button onClick={handleManualRefresh} className="bg-blue-600 hover:bg-blue-700 rounded-xl">
                         <MapPin className="h-4 w-4 mr-2" />
                         Enable Location & Retry
                     </Button>
@@ -100,18 +96,16 @@ const FeedPage = () => {
     // Loading skeleton
     if (loading && posts.length === 0) {
         return (
-            <div className="max-w-2xl mx-auto px-2 py-6" ref={scrollContainerRef}>
+            <div className="w-full max-w-[640px] mx-auto py-6 px-1" ref={scrollContainerRef}>
                 {/* Header skeleton */}
-                <div className="flex items-center justify-between mb-6 px-1">
+                <div className="flex items-center justify-between mb-6">
                     <div className="h-7 w-32 bg-gray-200 rounded-lg animate-pulse" />
                     <div className="h-9 w-28 bg-gray-200 rounded-xl animate-pulse" />
                 </div>
-                <div className="space-y-6">
-                    {Array(4)
-                        .fill(0)
-                        .map((_, index) => (
-                            <PostCardSkeleton key={index} />
-                        ))}
+                <div className="space-y-5">
+                    {Array(4).fill(0).map((_, index) => (
+                        <PostCardSkeleton key={index} />
+                    ))}
                 </div>
             </div>
         );
@@ -120,17 +114,14 @@ const FeedPage = () => {
     // Empty state
     if (!loading && posts.length === 0) {
         return (
-            <div className="max-w-2xl mx-auto px-2 py-6">
+            <div className="w-full max-w-[640px] mx-auto py-6 px-1">
                 <div className="flex flex-col justify-center items-center min-h-[50vh] space-y-6">
                     {error ? (
                         <div className="p-6 bg-red-50 border border-red-200 rounded-2xl text-center max-w-md">
                             <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
                             <p className="text-red-700 font-medium mb-1">Something went wrong</p>
                             <p className="text-sm text-red-600 mb-4">{error}</p>
-                            <Button
-                                onClick={handleManualRefresh}
-                                className="bg-red-600 hover:bg-red-700 rounded-xl"
-                            >
+                            <Button onClick={handleManualRefresh} className="bg-red-600 hover:bg-red-700 rounded-xl">
                                 Try Again
                             </Button>
                         </div>
@@ -146,8 +137,8 @@ const FeedPage = () => {
                                 No posts near you yet. Follow some local businesses to fill your feed with updates!
                             </p>
 
-                            {/* Show who to follow in empty state */}
-                            <div className="w-full max-w-sm mx-auto mb-6">
+                            {/* Show who to follow in empty state (mobile only — desktop has it in right sidebar) */}
+                            <div className="w-full max-w-sm mx-auto mb-6 lg:hidden">
                                 <WhoToFollow />
                             </div>
 
@@ -167,10 +158,15 @@ const FeedPage = () => {
     }
 
     return (
-        <div className="max-w-2xl mx-auto px-2 py-6" ref={scrollContainerRef}>
+        <div className="w-full max-w-[640px] mx-auto py-6 px-1" ref={scrollContainerRef}>
             {/* Feed Header */}
-            <div className="flex items-center justify-between mb-6 px-1">
-                <h1 className="text-xl font-bold text-gray-900">Your Feed</h1>
+            <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg">
+                        <Flame className="h-4 w-4 text-white" />
+                    </div>
+                    <h1 className="text-xl font-bold text-gray-900">Your Feed</h1>
+                </div>
                 <Button
                     onClick={handleManualRefresh}
                     disabled={loading || isRefreshing}
@@ -198,14 +194,14 @@ const FeedPage = () => {
                 </div>
             )}
 
-            {/* Who To Follow - inline at top of feed */}
-            <div className="mb-6">
+            {/* Mobile-only: Who To Follow (hidden on desktop since it's in the right sidebar) */}
+            <div className="mb-5 lg:hidden">
                 <WhoToFollow />
             </div>
 
             {/* Posts */}
             <div className="space-y-5">
-                {posts.map((post) => (
+                {posts.map((post, index) => (
                     <div key={post.id} className="relative group">
                         {/* Recommendation Badge */}
                         <div className="absolute top-4 left-4 z-10">

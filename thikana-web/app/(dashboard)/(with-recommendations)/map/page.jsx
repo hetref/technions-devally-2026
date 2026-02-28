@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 import Script from "next/script";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+import ngeohash from "ngeohash";
 import { useLocationAlert } from "@/context/LocationAlertContext";
 
 export default function StoreLocationPicker() {
@@ -321,12 +322,12 @@ export default function StoreLocationPicker() {
             };
 
             const businessesRef = doc(db, "businesses", auth.currentUser.uid);
-            await updateDoc(businessesRef, {
+            await setDoc(businessesRef, {
                 _geoloc: geoloc,
                 // Keep legacy field updated to avoid breaking other pages relying on it
                 location: { latitude: geoloc.lat, longitude: geoloc.lng },
                 locationAddress: selectedLocation.address || "",
-            });
+            }, { merge: true });
 
             const usersRef = doc(db, "users", auth.currentUser.uid);
             await setDoc(
@@ -339,6 +340,21 @@ export default function StoreLocationPicker() {
                 },
                 { merge: true }
             );
+
+            // API requirements for recommendation ML models
+            const newCell = ngeohash.encode(geoloc.lat, geoloc.lng, 5);
+            if (existingLocation) {
+                const oldCell = ngeohash.encode(existingLocation.lat, existingLocation.lng, 5);
+                if (oldCell !== newCell) {
+                    await updateDoc(doc(db, "location_index", oldCell), {
+                        business_ids: arrayRemove(auth.currentUser.uid),
+                    }).catch(e => console.error("Error removing old location_index:", e));
+                }
+            }
+
+            await setDoc(doc(db, "location_index", newCell), {
+                business_ids: arrayUnion(auth.currentUser.uid),
+            }, { merge: true });
 
             // Update the global alert state
             setShowLocationAlert(false);
