@@ -1,18 +1,18 @@
 "use client";
 
 import React from "react";
-import { SignUpForm } from "@/components/auth/SignUpForm";
 import Image from "next/image";
+import BusinessRegistration from "@/components/auth/BusinessRegistration";
 
-export default function SignUpPage() {
+const BusinessRegistrationPage = () => {
 
-    const title = <span className="font-light text-foreground tracking-tighter">Join Thikana</span>;
-    const description = "Create your account and start your journey with us";
+    const title = <span className="font-light text-foreground tracking-tighter">Business Registration</span>;
+    const description = "Register your business and start growing with Thikana";
     const heroImageSrc = "https://images.unsplash.com/photo-1642615835477-d303d7dc9ee9?w=2160&q=80";
 
     return (
         <div className="flex flex-col md:flex-row font-geist w-full min-h-[100svh] bg-white">
-            {/* Left column: sign-up form */}
+            {/* Left column: business registration form */}
             <section className="flex-1 flex flex-col items-center justify-start p-8 bg-white">
                 <div className="w-full max-w-md py-8">
                     <div className="flex flex-col gap-6">
@@ -24,9 +24,9 @@ export default function SignUpPage() {
                         <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight text-gray-900">{title}</h1>
                         <p className="animate-element animate-delay-200 text-gray-600">{description}</p>
 
-                        {/* SignUpForm component wrapped in the new UI */}
+                        {/* BusinessRegistration component wrapped in the new UI */}
                         <div className="animate-element animate-delay-300">
-                            <SignUpForm />
+                            <BusinessRegistration />
                         </div>
                     </div>
                 </div>
@@ -40,4 +40,6 @@ export default function SignUpPage() {
             )}
         </div>
     );
-}
+};
+
+export default BusinessRegistrationPage;

@@ -15,13 +15,13 @@ export default function LoginPage() {
     const heroImageSrc = "https://images.unsplash.com/photo-1642615835477-d303d7dc9ee9?w=2160&q=80"; // Updated to Unsplash image
 
     return (
-        <div className="h-[100svh] flex flex-col md:flex-row font-geist w-[100svw]">
+        <div className="flex flex-col md:flex-row font-geist w-full min-h-[100svh] bg-white">
             {/* Left column: sign-in form */}
-            <section className="flex-1 flex items-center justify-center p-8 bg-white">
-                <div className="w-full max-w-md">
+            <section className="flex-1 flex flex-col items-center justify-start p-8 bg-white">
+                <div className="w-full max-w-md py-8">
                     <div className="flex flex-col gap-6">
                         {/* Logo */}
-                        <div className="flex items-center gap-2 self-center font-medium">
+                        <div className="flex items-center gap-2 font-medium mb-2">
                             <Image src="/logo/black-logo.png" alt="Thikana Logo" width={100} height={100} />
                         </div>
 
@@ -36,10 +36,10 @@ export default function LoginPage() {
                 </div>
             </section>
 
-            {/* Right column: hero image */}
+            {/* Right column: hero image — sticky */}
             {heroImageSrc && (
-                <section className="hidden md:block flex-1 relative p-4 bg-whit">
-                    <div className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl bg-cover bg-center" style={{ backgroundImage: `url(${heroImageSrc})` }}></div>
+                <section className="hidden md:block w-[45%] sticky top-0 h-[100svh] p-4 bg-white">
+                    <div className="animate-slide-right animate-delay-300 h-full w-full rounded-3xl bg-cover bg-center" style={{ backgroundImage: `url(${heroImageSrc})` }}></div>
                 </section>
             )}
         </div>
