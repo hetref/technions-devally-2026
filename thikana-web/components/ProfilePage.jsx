@@ -21,7 +21,7 @@ const ProfilePage = ({ user = {} }) => {
     website: user.website || ''
   });
 
-  const joinedDate = new Date().toLocaleDateString('en-US', { 
+  const joinedDate = new Date().toLocaleDateString('en-US', {
     month: 'long',
     year: 'numeric'
   });

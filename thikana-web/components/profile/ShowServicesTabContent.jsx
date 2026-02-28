@@ -18,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -38,7 +37,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -55,7 +53,6 @@ import Loader from "@/components/Loader"
 export default function ShowServicesTabContent({
   userId,
   userData,
-  isViewOnly = false,
   currentUserView = false,
 }) {
   const router = useRouter();
@@ -180,7 +177,7 @@ export default function ShowServicesTabContent({
   if (loading) {
     return (
       <div className="flex justify-center items-center py-16">
-        <Loader/>
+        <Loader />
       </div>
     );
   }
@@ -341,7 +338,7 @@ export default function ShowServicesTabContent({
               <Button type="submit" disabled={contactForm.submitting}>
                 {contactForm.submitting ? (
                   <>
-                    <Loader/>
+                    <Loader />
                     Sending...
                   </>
                 ) : (

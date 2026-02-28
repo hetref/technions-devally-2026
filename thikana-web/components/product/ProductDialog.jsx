@@ -19,7 +19,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCart } from "@/components/CartContext";
 import { usePathname, useParams } from "next/navigation";
-import { createRazorpayOrder } from "@/lib/payment/razorpay";
 import { resolveBusinessId, getBusinessName } from "@/lib/business-utils";
 
 /**
@@ -452,7 +451,7 @@ export default function ProductDialog({
       } catch (err) {
         console.warn('Failed to update root products doc (non-fatal):', err);
       }
-       toast.success("Product updated successfully");
+      toast.success("Product updated successfully");
       setIsEditing(false);
       // If onEditProduct callback exists, call it to refresh the product list
       if (typeof onEditProduct === 'function') {
@@ -490,7 +489,7 @@ export default function ProductDialog({
             <tr><th>Item</th><th>Qty</th><th>Unit</th><th class="right">Amount</th></tr>
           </thead>
           <tbody>
-            ${items.map(it => `<tr><td>${it.name}</td><td class="right">${it.qty}</td><td class="right">${it.unit.toFixed(2)}</td><td class="right">${(it.unit*it.qty).toFixed(2)}</td></tr>`).join('')}
+            ${items.map(it => `<tr><td>${it.name}</td><td class="right">${it.qty}</td><td class="right">${it.unit.toFixed(2)}</td><td class="right">${(it.unit * it.qty).toFixed(2)}</td></tr>`).join('')}
           </tbody>
         </table>
         <div style="margin-top:12px; text-align:right;">
@@ -512,8 +511,8 @@ export default function ProductDialog({
     }
   }
 
-   // Handle product update
-   const handleProductUpdated = (updatedProduct) => {
+  // Handle product update
+  const handleProductUpdated = (updatedProduct) => {
     if (typeof onEditProduct === 'function') {
       onEditProduct(updatedProduct);
     }
@@ -521,10 +520,10 @@ export default function ProductDialog({
     toast.success("Product updated successfully");
   };
 
-   // Handle product deletion
-   const handleDeleteProduct = async () => {
+  // Handle product deletion
+  const handleDeleteProduct = async () => {
     if (!product || !product.id) return;
-    
+
     setIsDeleting(true);
     try {
       await deleteProduct(userId, product.id, product.imageUrl);
@@ -554,8 +553,8 @@ export default function ProductDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent 
-        className="sm:max-w-[425px]" 
+      <DialogContent
+        className="sm:max-w-[425px]"
         aria-describedby="product-dialog-description"
       >
         <DialogHeader>
