@@ -28,6 +28,33 @@ export const getWebsite = async (businessId, websiteId) => {
   }
 };
 
+export const getWebsites = async (businessId) => {
+  try {
+    const websitesRef = collection(db, "businesses", businessId, "websites");
+    const q = query(websitesRef, orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    
+    const websites = [];
+    snap.forEach((doc) => {
+      websites.push({ id: doc.id, ...doc.data() });
+    });
+    return websites;
+  } catch (error) {
+    if (error.code === 'failed-precondition') {
+       // If no index exists, fall back to default order
+       const websitesRef = collection(db, "businesses", businessId, "websites");
+       const snap = await getDocs(websitesRef);
+       const websites = [];
+       snap.forEach((doc) => {
+         websites.push({ id: doc.id, ...doc.data() });
+       });
+       return websites;
+    }
+    console.error("Error fetching websites:", error);
+    throw error;
+  }
+};
+
 export const createWebsite = async (businessId, websiteData) => {
   try {
     const websitesRef = collection(db, "businesses", businessId, "websites");
@@ -115,6 +142,20 @@ export const savePageLayout = async (businessId, websiteId, pageId, layout) => {
     return true;
   } catch (error) {
     console.error("Error saving page layout:", error);
+    throw error;
+  }
+};
+
+export const savePageData = async (businessId, websiteId, pageId, data) => {
+  try {
+    const pageRef = doc(db, "businesses", businessId, "websites", websiteId, "pages", pageId);
+    await updateDoc(pageRef, {
+      ...data,
+      updatedAt: serverTimestamp(),
+    });
+    return true;
+  } catch (error) {
+    console.error("Error saving page data:", error);
     throw error;
   }
 };

@@ -367,10 +367,10 @@ export default function AIChatCopilot({ tenantId, siteId }) {
       <button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full shadow-2xl hover:shadow-purple-500/50 hover:scale-105 active:scale-95 transition-all font-bold text-sm uppercase tracking-wider group"
-        aria-label="Open SitePilot Assistant"
+        aria-label="Open Thikana Assistant"
       >
         <Sparkles className="w-5 h-5 animate-pulse" />
-        <span>SitePilot Assistant</span>
+        <span>Thikana Assistant</span>
       </button>
     );
   }
@@ -381,7 +381,7 @@ export default function AIChatCopilot({ tenantId, siteId }) {
         <div className="flex items-center justify-between p-3 border-b bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-lg">
           <div className="flex items-center gap-2">
              <Sparkles className="w-4 h-4 text-purple-600" />
-             <span className="text-sm font-bold text-gray-900 uppercase tracking-tight">SitePilot Assistant</span>
+             <span className="text-sm font-bold text-gray-900 uppercase tracking-tight">Thikana Assistant</span>
           </div>
           <div className="flex gap-2">
             <button
@@ -408,7 +408,7 @@ export default function AIChatCopilot({ tenantId, siteId }) {
     <div
       className="fixed bottom-6 right-6 w-[400px] max-h-[600px] h-[600px] bg-white rounded-2xl shadow-2xl border-2 border-purple-200 flex flex-col z-50 overflow-hidden"
       role="complementary"
-      aria-label="SitePilot Assistant"
+      aria-label="Thikana Assistant"
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
@@ -417,7 +417,7 @@ export default function AIChatCopilot({ tenantId, siteId }) {
              <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 className="font-black text-sm uppercase tracking-tight text-gray-900">SitePilot Assistant</h3>
+            <h3 className="font-black text-sm uppercase tracking-tight text-gray-900">Thikana Assistant</h3>
             <p className="text-xs text-gray-500 font-medium">Build faster with AI</p>
           </div>
         </div>

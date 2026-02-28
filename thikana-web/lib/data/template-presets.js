@@ -38,7 +38,7 @@ const landingPageLayout = [
             id: "tpl-lp-navbar",
             type: "Navbar",
             props: {
-              logo: "SitePilot",
+              logo: "Thikana",
               links: [
                 { label: "Home", href: "#" },
                 { label: "Features", href: "#features" },
@@ -181,7 +181,7 @@ const landingPageLayout = [
             props: {
               title: "Ready to Launch Your Website?",
               description:
-                "Join over 10,000 creators who trust SitePilot to power their online presence.",
+                "Join over 10,000 creators who trust Thikana to power their online presence.",
               buttonText: "Get Started for Free",
               buttonLink: "#pricing",
             },
@@ -221,7 +221,7 @@ const landingPageLayout = [
             id: "tpl-lp-footer-comp",
             type: "Footer",
             props: {
-              copyright: "© 2026 SitePilot. All rights reserved.",
+              copyright: "© 2026 Thikana. All rights reserved.",
               links: [
                 { label: "Privacy Policy", href: "#" },
                 { label: "Terms of Service", href: "#" },

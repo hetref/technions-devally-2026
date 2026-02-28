@@ -27,7 +27,7 @@ export const demoWebsiteJSON = {
       slug: "/",
       seo: {
         title: "Demo Website — Home",
-        description: "Welcome to the demo website built with SitePilot.",
+        description: "Welcome to the demo website built with Thikana.",
       },
       layout: [
         // ── Navbar ──────────────────────────────────────────────
@@ -60,7 +60,7 @@ export const demoWebsiteJSON = {
                   id: nanoid(),
                   type: "Navbar",
                   props: {
-                    logo: "SitePilot",
+                    logo: "Thikana",
                     links: [
                       { label: "Home", href: "#" },
                       { label: "Features", href: "#features" },
@@ -148,7 +148,7 @@ export const demoWebsiteJSON = {
                   id: nanoid(),
                   type: "Features",
                   props: {
-                    heading: "Why Choose SitePilot?",
+                    heading: "Why Choose Thikana?",
                     features: [
                       {
                         icon: "⚡",
@@ -210,7 +210,7 @@ export const demoWebsiteJSON = {
                   props: {
                     title: "Ready to get started?",
                     description:
-                      "Join thousands of creators already using SitePilot.",
+                      "Join thousands of creators already using Thikana.",
                     buttonText: "Start Building",
                     buttonLink: "#signup",
                   },
@@ -252,7 +252,7 @@ export const demoWebsiteJSON = {
                   id: nanoid(),
                   type: "Footer",
                   props: {
-                    text: "© 2025 SitePilot. All rights reserved.",
+                    text: "© 2025 Thikana. All rights reserved.",
                     links: [
                       { label: "Privacy Policy", href: "#" },
                       { label: "Terms of Service", href: "#" },
