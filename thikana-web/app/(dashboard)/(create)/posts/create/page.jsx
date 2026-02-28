@@ -224,7 +224,7 @@ const CreatePost = () => {
                 },
             });
 
-            router.push("/");
+            router.push("/profile");
         } catch (error) {
             console.error("Error creating post:", error);
             alert("Failed to create the post. Please try again.");
