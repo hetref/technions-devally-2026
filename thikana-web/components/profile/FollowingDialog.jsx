@@ -254,7 +254,7 @@ const FollowingDialog = ({ followingCount, userId, className, viewOnly = false, 
                                         >
                                             {isBusiness ? (
                                                 <Link
-                                                    href={`/${user?.uid}`}
+                                                    href={`/${user?.username || user?.uid}`}
                                                     className="flex items-center gap-3 flex-1 min-w-0"
                                                 >
                                                     <Avatar className="h-12 w-12 border-2 border-white shadow-sm">

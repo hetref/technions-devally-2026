@@ -29,7 +29,7 @@ const ShareBusinessDialog = ({ userData, buttonClassName, buttonText = "Share" }
   const qrRef = useRef(null);
   const profileUrl =
     typeof window !== "undefined"
-      ? `${window.location.origin}/${userData?.username}?user=${userData?.uid}`
+      ? `${window.location.origin}/${userData?.username}`
       : "";
 
   const handleCopyLink = () => {

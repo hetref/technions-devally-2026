@@ -127,8 +127,7 @@ const BusinessRegistration = () => {
             );
             const uid = userCredential.user.uid;
 
-            const username = `${businessName.toLowerCase()}-${Math.floor(Math.random() * 90000) + 10000
-                }`;
+            const username = `${businessName.toLowerCase().replace(/[^a-z0-9]/g, '')}-${Math.floor(Math.random() * 90000) + 10000}`;
 
             const businessData = {
                 businessName,

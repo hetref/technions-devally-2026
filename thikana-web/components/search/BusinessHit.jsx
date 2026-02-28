@@ -3,11 +3,17 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Briefcase, Navigation } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const BusinessHit = ({ hit, userLocation, googleMapsService }) => {
     const [distance, setDistance] = useState(null);
     const [loading, setLoading] = useState(false);
     const businessLocation = hit.location || null;
+    const { user } = useAuth();
+
+    if (user && (user.uid === hit.objectID || user.uid === hit.uid)) {
+        return null;
+    }
 
     useEffect(() => {
         const calculateGoogleDistance = async () => {
@@ -45,7 +51,7 @@ const BusinessHit = ({ hit, userLocation, googleMapsService }) => {
 
     return (
         <Link
-            href={`/${hit.username || "business"}?user=${hit.objectID || hit.id}`}
+            href={`/${hit.username || "business"}`}
             className="block group"
         >
             <div className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 p-6 border border-gray-100 hover:border-gray-200 group-hover:scale-[1.01]">
@@ -60,11 +66,6 @@ const BusinessHit = ({ hit, userLocation, googleMapsService }) => {
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
-                        {hit.isFranchise && (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-purple-50 text-purple-700 border border-purple-200">
-                                Franchise
-                            </span>
-                        )}
                         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 border border-gray-200 capitalize">
                             {hit.plan || "basic"} plan
                         </span>
