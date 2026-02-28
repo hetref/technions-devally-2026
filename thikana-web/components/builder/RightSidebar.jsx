@@ -460,6 +460,25 @@ function PropertiesEditor({ component, onUpdate, siteId }) {
             aiRewrite={true}
             componentType={componentType}
           />
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <InputField
+              label="Title Size (px)"
+              type="number"
+              value={props.titleFontSize || ""}
+              onChange={(value) => handleChange("titleFontSize", value ? parseInt(value) : null)}
+              compact
+            />
+             <div className="flex flex-col">
+              <label className="block text-xs font-medium text-gray-600 mb-1 leading-none mt-1">Title Color</label>
+              <div className="flex bg-white rounded-md border border-gray-200 overflow-hidden shadow-sm flex-1">
+                <input type="color" value={props.titleColor || "#000000"} onChange={(e) => handleChange("titleColor", e.target.value)} className="w-8 h-full min-h-[26px] cursor-pointer p-0 border-0" />
+                <button onClick={() => handleChange("titleColor", "")} className="text-[10px] text-gray-400 font-bold uppercase w-full hover:bg-gray-50 flex items-center justify-center border-l border-gray-100" title="Clear Color">Reset</button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="w-full h-px bg-gray-100 my-2" />
+
           <InputField
             label="Subtitle"
             value={props.subtitle || ""}
@@ -468,6 +487,25 @@ function PropertiesEditor({ component, onUpdate, siteId }) {
             aiRewrite={true}
             componentType={componentType}
           />
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            <InputField
+              label="Subtitle Size (px)"
+              type="number"
+              value={props.subtitleFontSize || ""}
+              onChange={(value) => handleChange("subtitleFontSize", value ? parseInt(value) : null)}
+              compact
+            />
+             <div className="flex flex-col">
+              <label className="block text-xs font-medium text-gray-600 mb-1 leading-none mt-1">Sub. Color</label>
+              <div className="flex bg-white rounded-md border border-gray-200 overflow-hidden shadow-sm flex-1">
+                <input type="color" value={props.subtitleColor || "#000000"} onChange={(e) => handleChange("subtitleColor", e.target.value)} className="w-8 h-full min-h-[26px] cursor-pointer p-0 border-0" />
+                 <button onClick={() => handleChange("subtitleColor", "")} className="text-[10px] text-gray-400 font-bold uppercase w-full hover:bg-gray-50 flex items-center justify-center border-l border-gray-100" title="Clear Color">Reset</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="w-full h-px bg-gray-100 my-2" />
+
           <InputField
             label="CTA Text"
             value={props.ctaText || ""}
