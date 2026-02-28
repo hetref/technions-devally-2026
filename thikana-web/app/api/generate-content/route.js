@@ -1,79 +1,49 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { NextResponse } from "next/server";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const formData = await request.formData();
-    const type = formData.get('type');
-    const prompt = formData.get('prompt');
-    const imageFile = formData.get('image');
+    const { componentType, fieldName, context, businessType } = await req.json();
 
-    if (!type) {
-      return new Response('Type is required', { status: 400 });
+    if (!componentType || !fieldName) {
+      return NextResponse.json(
+        { error: "Component type and field name are required." },
+        { status: 400 }
+      );
     }
 
-    if (type === 'title' && !imageFile) {
-      return new Response('Image is required for title generation', { status: 400 });
-    }
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    if (type === 'description' && !prompt) {
-      return new Response('Title is required for description generation', { status: 400 });
-    }
+    // Construct a context-aware system prompt
+    let systemPrompt = `You are an expert copywriter for websites. Generate content for a specific part of a website component.
+    
+    Component: ${componentType}
+    Field to generating for: ${fieldName}
+    ${businessType ? `Business Type / Industry: ${businessType}` : ""}
+    ${context ? `Additional Context / Instructions: ${context}` : ""}
+    
+    Instructions:
+    1. Provide ONLY the final generated text.
+    2. Do NOT use quotation marks.
+    3. Keep it professional, engaging, and appropriate for the context.
+    4. Size mapping hints:
+       - 'title' / 'heading' -> Short, catchy, 3-7 words.
+       - 'subtitle' -> 1 sentence summarizing value.
+       - 'description' / 'content' -> 2-3 sentences.
+       - 'ctaText' / 'buttonText' -> 2-4 actionable words (e.g., 'Get Started Now').
+    `;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const finalResult = await model.generateContent(systemPrompt);
+    const content = finalResult.response.text();
 
-    let promptText = "";
-    if (type === "title") {
-      promptText = `You are a creative social media content writer. Generate a creative, engaging, and relevant title for a social media post based on this image. The title should be:
-      1. Concise (under 50 characters)
-      2. Catchy and attention-grabbing
-      3. Relevant to the image content
-      4. Suitable for social media
-      5. No hashtags or emojis
-      
-      Respond with ONLY the title text, nothing else.`;
-    } else if (type === "description") {
-      promptText = `You are a creative social media content writer. Generate an engaging description for a social media post with the title "${prompt}" ${imageFile ? "and based on this image" : ""
-        }. The description should be:
-      1. Natural and conversational in tone
-      2. Between 100-150 words
-      3. Include relevant hashtags at the end
-      4. Engaging and encourage interaction
-      5. Highlight key aspects of ${imageFile ? "the image and " : ""}the title
-      
-      Respond with ONLY the description text, nothing else.`;
-    }
-
-    let result;
-    if (imageFile) {
-      const imageBytes = await imageFile.arrayBuffer();
-      const base64Image = Buffer.from(imageBytes).toString('base64');
-
-      const imageParts = {
-        inlineData: {
-          data: base64Image,
-          mimeType: imageFile.type
-        }
-      };
-
-      result = await model.generateContent([promptText, imageParts]);
-    } else {
-      result = await model.generateContent(promptText);
-    }
-
-    const response = await result.response;
-    const text = response.text();
-
-    if (!text) {
-      throw new Error('No content generated');
-    }
-
-    return Response.json({ generated: text.trim() });
+    return NextResponse.json({ success: true, content: content.trim() });
   } catch (error) {
-    console.error('Generation error:', error);
-    return new Response(error.message || 'Failed to generate content', {
-      status: 500
-    });
+    console.error("[AI Generate Content Error]:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to generate content" },
+      { status: 500 }
+    );
   }
 }
