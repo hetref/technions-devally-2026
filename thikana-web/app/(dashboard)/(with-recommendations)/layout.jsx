@@ -36,7 +36,7 @@ const WithRecommendationsLayout = ({ children }) => {
     // Increased sidebar widths from 300px to 400px
     const gridColsClass = isProfileRoute
         ? "grid-cols-1"
-        : "grid-cols-1 lg:grid-cols-[500px_1fr_500px]";
+        : "grid-cols-1 lg:grid-cols-[400px_1fr]";
 
     return (
         <div className="w-full">
@@ -59,7 +59,7 @@ const WithRecommendationsLayout = ({ children }) => {
                         </div>
                     </aside>
                 )}
-                <main className={`${isProfileRoute ? 'w-full' : 'w-[900px] justify-self-start'} ${isFeedPage ? 'max-h-screen overflow-y-auto' : ''}`}>{children}</main>
+                <main className={`${isProfileRoute ? 'w-full' : 'w-full justify-self-start'} ${isFeedPage ? 'max-h-screen overflow-y-auto' : ''}`}>{children}</main>
             </div>
         </div>
     );
