@@ -1,0 +1,137 @@
+{
+  "users": {
+    "user_001": {
+      "name": "Riya Sharma",
+      "location": { "latitude": 18.5204, "longitude": 73.8567 },
+      "following": ["biz_001", "biz_003"]
+    },
+    "user_002": {
+      "name": "Arjun Mehta",
+      "location": { "latitude": 18.5300, "longitude": 73.8700 },
+      "following": ["biz_002"]
+    },
+    "user_003": {
+      "name": "Priya Kulkarni",
+      "location": { "latitude": 19.0760, "longitude": 72.8777 },
+      "following": []
+    }
+  },
+
+  "businesses": {
+    "biz_001": {
+      "businessName": "Chai Corner",
+      "username": "chaicorner",
+      "businessType": "Cafe",
+      "location": { "latitude": 18.5210, "longitude": 73.8570 },
+      "postCount": 18,
+      "lastPostedAt": "2026-02-27T09:00:00Z"
+    },
+    "biz_002": {
+      "businessName": "Pune Bakes",
+      "username": "punebakes",
+      "businessType": "Bakery",
+      "location": { "latitude": 18.5250, "longitude": 73.8600 },
+      "postCount": 5,
+      "lastPostedAt": "2026-02-26T15:00:00Z"
+    },
+    "biz_003": {
+      "businessName": "Tech Hub Pune",
+      "username": "techhubpune",
+      "businessType": "Co-working",
+      "location": { "latitude": 18.5190, "longitude": 73.8550 },
+      "postCount": 32,
+      "lastPostedAt": "2026-02-28T08:00:00Z"
+    },
+    "biz_004": {
+      "businessName": "Mumbai Spice",
+      "username": "mumbaispice",
+      "businessType": "Restaurant",
+      "location": { "latitude": 19.0760, "longitude": 72.8777 },
+      "postCount": 12,
+      "lastPostedAt": "2026-02-25T12:00:00Z"
+    },
+    "biz_005": {
+      "businessName": "Local Grocery Kaka",
+      "username": "localkaka",
+      "businessType": "Grocery",
+      "location": { "latitude": 18.5220, "longitude": 73.8580 },
+      "postCount": 2,
+      "lastPostedAt": "2026-02-20T10:00:00Z"
+    },
+    "biz_006": {
+      "businessName": "Fits & Kicks",
+      "username": "fitsnkicks",
+      "businessType": "Fitness",
+      "location": { "latitude": 18.5240, "longitude": 73.8560 },
+      "postCount": 0,
+      "lastPostedAt": null
+    }
+  },
+
+  "posts": [
+    {
+      "id": "post_001",
+      "uid": "biz_001",
+      "caption": "Fresh cutting chai is ready! Come visit us. ☕",
+      "imageUrl": "",
+      "likeCount": 48,
+      "createdAt": "2026-02-28T07:30:00Z"
+    },
+    {
+      "id": "post_002",
+      "uid": "biz_001",
+      "caption": "New monsoon menu is out! 🌧️ Ginger tea special.",
+      "imageUrl": "",
+      "likeCount": 22,
+      "createdAt": "2026-02-27T10:00:00Z"
+    },
+    {
+      "id": "post_003",
+      "uid": "biz_002",
+      "caption": "Freshly baked croissants every morning! 🥐",
+      "imageUrl": "",
+      "likeCount": 35,
+      "createdAt": "2026-02-28T06:00:00Z"
+    },
+    {
+      "id": "post_004",
+      "uid": "biz_003",
+      "caption": "Book your hot desk for the week — limited spots! 💻",
+      "imageUrl": "",
+      "likeCount": 10,
+      "createdAt": "2026-02-28T08:00:00Z"
+    },
+    {
+      "id": "post_005",
+      "uid": "biz_003",
+      "caption": "Free WiFi upgrade done! Blazing fast speeds now.",
+      "imageUrl": "",
+      "likeCount": 61,
+      "createdAt": "2026-02-26T09:00:00Z"
+    },
+    {
+      "id": "post_006",
+      "uid": "biz_004",
+      "caption": "Monsoon Special Thali — only ₹149 today! 🌶️",
+      "imageUrl": "",
+      "likeCount": 88,
+      "createdAt": "2026-02-27T13:00:00Z"
+    },
+    {
+      "id": "post_007",
+      "uid": "biz_005",
+      "caption": "Fresh veggies just arrived! Onions at ₹20/kg.",
+      "imageUrl": "",
+      "likeCount": 5,
+      "createdAt": "2026-02-20T09:00:00Z"
+    },
+    {
+      "id": "post_008",
+      "uid": "biz_006",
+      "caption": "Grand opening next week! Stay tuned. 🏋️",
+      "imageUrl": "",
+      "likeCount": 3,
+      "createdAt": "2026-02-22T11:00:00Z"
+    }
+  ]
+}
