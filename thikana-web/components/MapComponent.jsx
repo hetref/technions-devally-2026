@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { Navigation, MapPin } from "lucide-react";
+import { Navigation, MapPin, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
-export default function MapComponent({ location, name, address }) {
+export default function MapComponent({ location, name, address, isCurrentUser }) {
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [error, setError] = useState(null);
   const mapRef = useRef(null);
@@ -171,14 +172,30 @@ export default function MapComponent({ location, name, address }) {
           {address && <p className="text-xs text-gray-600 truncate mt-1 pl-6">{address}</p>}
         </div>
 
-        <Button
-          onClick={handleGetDirections}
-          size="default"
-          className="rounded-full shadow-lg gap-2 font-semibold pointer-events-auto hover:scale-105 transition-transform bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          <Navigation size={18} className="fill-current" />
-          <span className="hidden sm:inline">Directions</span>
-        </Button>
+        <div className="flex gap-2 shrink-0 pointer-events-auto items-center">
+          {isCurrentUser && (
+            <Button
+              asChild
+              size="default"
+              variant="outline"
+              className="rounded-full shadow-lg gap-2 font-semibold hover:scale-105 transition-transform bg-white hover:bg-gray-50 text-gray-700 border-gray-200 hidden sm:flex"
+            >
+              <Link href="/my-location">
+                <Pencil size={18} />
+                <span>Edit</span>
+              </Link>
+            </Button>
+          )}
+
+          <Button
+            onClick={handleGetDirections}
+            size="default"
+            className="rounded-full shadow-lg gap-2 font-semibold hover:scale-105 transition-transform bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Navigation size={18} className="fill-current" />
+            <span className="hidden sm:inline">Directions</span>
+          </Button>
+        </div>
       </div>
     </div>
   );

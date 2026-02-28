@@ -653,11 +653,13 @@ export default function Profile() {
 
         return (
             <div className="space-y-4">
-                {posts.map((post) => (
-                    <div key={post.id} className="w-full">
-                        <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} />
-                    </div>
-                ))}
+                <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                    {posts.map((post) => (
+                        <div key={post.id} className="w-full">
+                            <PostCard post={post} onView={() => router.push(`/post/${post.id || post.postId}`)} compact />
+                        </div>
+                    ))}
+                </div>
                 {hasMore && (
                     <div className="flex justify-center pt-4">
                         <Button
@@ -703,7 +705,7 @@ export default function Profile() {
     const renderSavedPostCard = useCallback(
         (post) => (
             <div key={post.id} className="w-full">
-                <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} />
+                <PostCard post={post} onView={() => router.push(`/post/${post.id || post.postId}`)} />
             </div>
         ),
         [router]
@@ -1034,7 +1036,7 @@ export default function Profile() {
                         ) : (
                             <>
                                 {/* Profile Card - Enhanced with Fixed Spacing */}
-                                <Card className="overflow-hidden bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-3xl">
+                                <Card className="overflow-hidden bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-3xl pt-0">
                                     {/* Cover Image with Gradient Overlay */}
                                     <div className="relative h-48 sm:h-56 lg:h-64 w-full overflow-hidden bg-gray-100 flex items-center justify-center">
                                         {isBusinessUser && (
@@ -1300,8 +1302,9 @@ export default function Profile() {
                                                                         : userData?.name
                                                                 }
                                                                 address={
-                                                                    userData?.locations?.address || "Location"
+                                                                    userData?.locationAddress || userData?.locations?.address || "Location"
                                                                 }
+                                                                isCurrentUser={isCurrentUser}
                                                             />
                                                         ) : (
                                                             <div className="flex flex-col justify-center items-center h-full bg-gray-50 p-6 gap-4">
@@ -1553,7 +1556,7 @@ export default function Profile() {
                                                             ) : (
                                                                 likedPosts.map((post, index) => (
                                                                     <div key={index} className="w-full">
-                                                                        <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} />
+                                                                        <PostCard post={post} onView={() => router.push(`/post/${post.id || post.postId}`)} />
                                                                     </div>
                                                                 ))
                                                             )}
@@ -2066,7 +2069,7 @@ export default function Profile() {
                                                             ) : (
                                                                 likedPosts.map((post, index) => (
                                                                     <div key={index} className="w-full">
-                                                                        <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} />
+                                                                        <PostCard post={post} onView={() => router.push(`/post/${post.id || post.postId}`)} />
                                                                     </div>
                                                                 ))
                                                             )}
@@ -2306,7 +2309,7 @@ export default function Profile() {
 
                     {/* Right sidebar - Quick Actions */}
                     <aside className="hidden lg:block w-80 flex-shrink-0 space-y-6">
-                        <Card className="p-6 bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-3xl sticky top-24">
+                        <Card className="p-6 bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-3xl sticky">
                             <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
                             <div className="space-y-3">
                                 {isCurrentUser && isBusinessUser && (
