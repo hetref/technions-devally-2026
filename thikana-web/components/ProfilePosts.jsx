@@ -150,7 +150,7 @@ const ProfilePosts = ({ post: initialPost, userData, onPostDelete }) => {
   const handleCommentClick = (e) => {
     e.stopPropagation();
     e.preventDefault();
-    router.push(`/feed/${post.id}`);
+    router.push(`/post/${post.id}`);
   };
 
   return (
