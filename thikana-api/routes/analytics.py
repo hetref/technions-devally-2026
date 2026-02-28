@@ -35,8 +35,11 @@ _mock_cache: dict | None = None
 def _get_transactions(user_id: str) -> list[dict]:
     """
     Returns transactions for a user.
-    Mock: reads from data/mock_db.json.
-    Firebase (Phase 3): query transactions subcollection.
+
+    USE_MOCK=True  → reads from data/mock_db.json  (local dev / tests)
+    USE_MOCK=False → reads from Firestore           (production)
+
+    Firestore path: transactions/{user_id}/user_transactions/{doc_id}
     """
     from config import USE_MOCK
 
@@ -48,11 +51,11 @@ def _get_transactions(user_id: str) -> list[dict]:
         all_txns = _mock_cache.get("transactions", [])
         return [t for t in all_txns if t.get("user_id") == user_id]
 
-    # ── Firebase stub (Phase 3) ───────────────────────────────────────────────
-    # from db.firebase import _db
-    # txn_ref = _db.collection("users").document(user_id).collection("transactions")
-    # return [doc.to_dict() | {"id": doc.id} for doc in txn_ref.stream()]
-    raise NotImplementedError("Firebase mode not yet wired for analytics")
+    # ── Live Firestore ────────────────────────────────────────────────────────
+    from db.firebase import FirebaseDB
+    db = FirebaseDB()
+    return db.get_user_transactions(user_id)
+
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
