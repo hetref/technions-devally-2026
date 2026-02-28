@@ -1,14 +1,13 @@
 "use client";
-import Sidebar from "@/components/Sidebar";
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Loader2 } from "lucide-react";
+import Loader from "@/components/Loader";
 
 const UsernameLayout = ({ children }) => {
     const params = useParams();
-    const usernameParam = params.username; // Use username param
+    const usernameParam = params.username;
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [notFound, setNotFound] = useState(false);
@@ -18,7 +17,6 @@ const UsernameLayout = ({ children }) => {
             try {
                 setLoading(true);
 
-                // Query the users collection by username field
                 const q = query(collection(db, "users"), where("username", "==", usernameParam));
                 const querySnapshot = await getDocs(q);
 
@@ -30,8 +28,6 @@ const UsernameLayout = ({ children }) => {
 
                 const userDoc = querySnapshot.docs[0];
                 const userData = userDoc.data();
-
-                console.log("USERDOC", userData);
 
                 // Check if the user role is "user" - in which case we don't show the profile
                 if (userData.role === "user") {
@@ -55,34 +51,30 @@ const UsernameLayout = ({ children }) => {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                <span className="ml-2">Loading profile...</span>
+                <Loader />
+                <span className="ml-3 text-gray-600">Loading profile...</span>
             </div>
         );
     }
 
     if (notFound) {
         return (
-            <div className="min-h-screen bg-gray-50">
-                <div className="max-w-[1400px] mx-auto">
-                    <div className="flex flex-col lg:flex-row gap-6 px-2 md:px-4">
-                        {/* <aside className="hidden lg:block lg:w-80">
-                            <div className="sticky top-20">
-                                <Sidebar />
+            <div className="flex items-center justify-center w-full">
+                <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="py-20">
+                        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-12 text-center max-w-lg mx-auto">
+                            <div className="p-4 rounded-full bg-gray-100 w-fit mx-auto mb-6">
+                                <svg className="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
                             </div>
-                        </aside> */}
-
-                        <main className="flex-1 py-10 px-4">
-                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-10 text-center">
-                                <h1 className="text-2xl font-bold text-gray-900 mb-4">
-                                    User Not Found
-                                </h1>
-                                <p className="text-gray-600">
-                                    The user you're looking for doesn't exist or is not a business
-                                    profile.
-                                </p>
-                            </div>
-                        </main>
+                            <h1 className="text-2xl font-bold text-gray-900 mb-3">
+                                Profile Not Found
+                            </h1>
+                            <p className="text-gray-600 leading-relaxed">
+                                The user you&apos;re looking for doesn&apos;t exist or is not a business profile.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -90,14 +82,12 @@ const UsernameLayout = ({ children }) => {
     }
 
     return (
-        <div className="min-h-screen">
-            <div className="max-w-[1400px] mx-auto">
-                <div>
-                    <main>{children}</main>
-                </div>
+        <div className="flex items-center justify-center w-full">
+            <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="w-full">{children}</div>
             </div>
         </div>
     );
 };
 
-export default UsernameLayout; 
+export default UsernameLayout;
