@@ -65,6 +65,8 @@ export function LoginForm() {
             } catch (error) {
                 console.error("Google Sign In Error:", error);
                 throw error;
+            } finally {
+                setIsLoading(false);
             }
         } catch (error) {
             console.error("Error signing in with Google:", error);
@@ -93,6 +95,9 @@ export function LoginForm() {
                 const errorMessage = error.message;
                 console.log(errorCode, errorMessage);
                 toast.error("Error signing in");
+            })
+            .finally(() => {
+                setIsLoading(false);
             });
     };
 

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import MainNavbar from "@/components/MainNavbar";
 
 export default function DashboardLayout({ children }) {
     const { user, loading } = useAuth();
@@ -20,5 +21,7 @@ export default function DashboardLayout({ children }) {
     // If there's no user, don't render dashboard pages (redirect is in progress)
     if (!user) return null;
 
-    return <>{children}</>;
+    return <>
+        <MainNavbar />
+        <div className="mt-[80px]">{children}</div></>;
 }
