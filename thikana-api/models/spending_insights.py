@@ -157,7 +157,9 @@ class SpendingInsights:
         Falls back to 'stable' if there's only 1 month of data.
         """
         monthly = (
-            cat.groupby(cat["timestamp"].dt.to_period("M"))["amount"]
+            cat.groupby(
+                cat["timestamp"].dt.tz_localize(None).dt.to_period("M")
+            )["amount"]
             .mean()
             .sort_index()
         )
@@ -293,7 +295,9 @@ class SpendingInsights:
         avg_daily = round(float(df["amount"].sum()) / days_span, 2)
 
         monthly = (
-            df.groupby(df["timestamp"].dt.to_period("M"))["amount"]
+            df.groupby(
+                df["timestamp"].dt.tz_localize(None).dt.to_period("M")
+            )["amount"]
             .sum()
             .sort_index()
         )
