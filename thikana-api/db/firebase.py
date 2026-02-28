@@ -4,101 +4,236 @@ db/firebase.py
 FirebaseDB — live Firestore implementation.
 Implements the same DataProvider interface as MockDB.
 
-STATUS: Phase 3 — stubs ready, uncomment when connecting Firebase.
-To activate: set USE_MOCK = False in config.py
+Activated when USE_MOCK = False in config.py.
+Reads serviceAccountKey.json from the path set in config.KEY_PATH.
 """
 
-# from firebase_admin import credentials, firestore, initialize_app
-# import firebase_admin
-#
-# if not firebase_admin._apps:
-#     cred = credentials.Certificate("serviceAccountKey.json")
-#     initialize_app(cred)
-#
-# _db = firestore.client()
+import math
+import logging
+from pathlib import Path
 
-from config import MAX_RADIUS_KM
+import firebase_admin
+from firebase_admin import credentials, firestore
 
+import config
+
+logger = logging.getLogger(__name__)
+
+# ── Firebase init (once per process) ─────────────────────────────────────────
+
+def _init_firebase() -> None:
+    if not firebase_admin._apps:
+        key_path = Path(config.KEY_PATH)
+        if not key_path.exists():
+            raise FileNotFoundError(
+                f"serviceAccountKey.json not found at: {key_path}\n"
+                "Set KEY_PATH correctly in config.py"
+            )
+        cred = credentials.Certificate(str(key_path))
+        firebase_admin.initialize_app(cred)
+        logger.info(f"Firebase initialised from {key_path}")
+
+
+_init_firebase()
+_db = firestore.client()
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(math.radians(lat1))
+        * math.cos(math.radians(lat2))
+        * math.sin(dlon / 2) ** 2
+    )
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def _doc_to_dict(doc) -> dict:
+    """Convert a Firestore document snapshot to a plain dict with 'id' included."""
+    data = doc.to_dict() or {}
+    data["id"] = doc.id
+    return data
+
+
+def _batch_fetch(collection_name: str, doc_ids: list[str]) -> dict[str, dict]:
+    """
+    Fetch multiple documents by ID in batches of 10 (Firestore 'in' query limit).
+    Returns {doc_id: doc_data}.
+
+    DB reads: ceil(n / 10)
+    """
+    if not doc_ids:
+        return {}
+
+    result: dict[str, dict] = {}
+    batch_size = 10
+
+    for i in range(0, len(doc_ids), batch_size):
+        batch = doc_ids[i : i + batch_size]
+        # Use document references for batch get — more efficient than 'in' query
+        refs = [_db.collection(collection_name).document(doc_id) for doc_id in batch]
+        docs = _db.get_all(refs)          # 1 Firestore RPC per batch
+        for doc in docs:
+            if doc.exists:
+                result[doc.id] = _doc_to_dict(doc)
+
+    return result
+
+
+# ── FirebaseDB class ──────────────────────────────────────────────────────────
 
 class FirebaseDB:
     """
-    Live Firestore implementation.
-    Total reads per feed request: ~12–15 (regardless of business count).
+    Live Firestore data provider.
+
+    Firestore reads per feed request:
+      get_following_ids:       1 read  (subcollection stream)
+      get_nearby_businesses:   9 reads (location_index cells) + ceil(n/10) reads
+      get_businesses_batch:    ceil(n/10) reads
+      get_posts_for_buses:     ceil(n/10) reads per batch of 10 businesses
+      ─────────────────────────────────────────────────────────
+      Total per feed request:  ~12–20 reads regardless of Firestore size
     """
 
+    # ── get_user ──────────────────────────────────────────────────────────────
+
     def get_user(self, user_id: str) -> dict | None:
-        raise NotImplementedError("Phase 3: uncomment Firebase code above")
-        # doc = _db.collection("users").document(user_id).get()  # 1 read
-        # return doc.to_dict() if doc.exists else None
+        """
+        1 Firestore read.
+        Collection: users/{user_id}
+        """
+        doc = _db.collection("users").document(user_id).get()
+        if not doc.exists:
+            return None
+        return _doc_to_dict(doc)
+
+    # ── get_following_ids ─────────────────────────────────────────────────────
 
     def get_following_ids(self, user_id: str) -> list[str]:
-        raise NotImplementedError("Phase 3: uncomment Firebase code above")
-        # following_ref = _db.collection("users").document(user_id).collection("following")
-        # return [doc.id for doc in following_ref.stream()]       # 1 read
+        """
+        1 Firestore read (subcollection stream).
+        Collection: users/{user_id}/following
+        Each document ID = the business ID being followed.
+        """
+        following_ref = (
+            _db.collection("users")
+            .document(user_id)
+            .collection("following")
+        )
+        return [doc.id for doc in following_ref.stream()]
+
+    # ── get_nearby_businesses ─────────────────────────────────────────────────
 
     def get_nearby_businesses(
         self,
         lat: float,
         lon: float,
-        max_radius_km: float = MAX_RADIUS_KM,
+        max_radius_km: float = config.MAX_RADIUS_KM,
     ) -> dict[str, float]:
-        raise NotImplementedError("Phase 3: uncomment Firebase code above")
-        # from core.geohash_utils import get_search_cells
-        # import math
-        #
-        # search_cells = get_search_cells(lat, lon)                # free
-        #
-        # # Step 1: read location_index for 9 geohash cells        → 9 reads
-        # business_ids = set()
-        # for cell in search_cells:
-        #     doc = _db.collection("location_index").document(cell).get()
-        #     if doc.exists:
-        #         business_ids.update(doc.to_dict().get("business_ids", []))
-        #
-        # # Step 2: batch-fetch business data              → ceil(n/10) reads
-        # businesses = self.get_businesses_batch(list(business_ids))
-        #
-        # # Step 3: exact Haversine filter                          → free
-        # result = {}
-        # for biz_id, biz in businesses.items():
-        #     loc = biz.get("location")
-        #     if not loc:
-        #         continue
-        #     dist = _haversine_km(lat, lon, loc["latitude"], loc["longitude"])
-        #     if dist <= max_radius_km:
-        #         result[biz_id] = round(dist, 2)
-        # return dict(sorted(result.items(), key=lambda x: x[1]))
+        """
+        Geohash-indexed spatial query. Total reads: 9 + ceil(n/10).
+        n = number of businesses found in the geohash cells (~10–50 typically).
+
+        Steps:
+          1. Compute center + 8 neighbours (9 geohash cells) — free
+          2. Read location_index/{cell} for each cell           — 9 reads
+          3. Collect unique business_ids from all cells
+          4. Batch-fetch businesses/{id} for exact location      — ceil(n/10) reads
+          5. Filter by Haversine distance                        — free
+
+        Returns {business_id: distance_km}, sorted by distance ascending.
+        """
+        from core.geohash_utils import get_search_cells
+
+        search_cells = get_search_cells(lat, lon)   # 9 geohash strings
+
+        # Step 2: read location_index for each cell
+        business_ids: set[str] = set()
+        for cell in search_cells:
+            doc = _db.collection("location_index").document(cell).get()  # 1 read each
+            if doc.exists:
+                ids = doc.to_dict().get("business_ids", [])
+                business_ids.update(ids)
+
+        if not business_ids:
+            logger.info(f"No businesses found in location_index for ({lat}, {lon})")
+            return {}
+
+        # Step 3: batch-fetch business data
+        businesses = _batch_fetch("businesses", list(business_ids))
+
+        # Step 4: exact Haversine filter
+        result: dict[str, float] = {}
+        for biz_id, biz in businesses.items():
+            loc = biz.get("location")
+            if not loc:
+                continue
+            biz_lat = loc.get("latitude")
+            biz_lon = loc.get("longitude")
+            if biz_lat is None or biz_lon is None:
+                continue
+            dist = _haversine_km(lat, lon, biz_lat, biz_lon)
+            if dist <= max_radius_km:
+                result[biz_id] = round(dist, 2)
+
+        return dict(sorted(result.items(), key=lambda x: x[1]))
+
+    # ── get_businesses_batch ──────────────────────────────────────────────────
 
     def get_businesses_batch(self, business_ids: list[str]) -> dict[str, dict]:
-        raise NotImplementedError("Phase 3: uncomment Firebase code above")
-        # if not business_ids:
-        #     return {}
-        # result = {}
-        # batch_size = 10
-        # for i in range(0, len(business_ids), batch_size):
-        #     batch = business_ids[i:i+batch_size]
-        #     query = _db.collection("businesses").where("__name__", "in", batch)
-        #     for doc in query.stream():                   # ceil(n/10) reads
-        #         result[doc.id] = doc.to_dict()
-        # return result
+        """
+        Batch-fetch business metadata.
+        DB reads: ceil(n / 10)
+        """
+        return _batch_fetch("businesses", business_ids)
+
+    # ── get_posts_for_businesses ──────────────────────────────────────────────
 
     def get_posts_for_businesses(
         self,
         business_ids: list[str],
         limit_per_business: int = 5,
     ) -> list[dict]:
-        raise NotImplementedError("Phase 3: uncomment Firebase code above")
-        # if not business_ids:
-        #     return []
-        # result = []
-        # batch_size = 10
-        # for i in range(0, len(business_ids), batch_size):
-        #     batch = business_ids[i:i+batch_size]
-        #     query = (
-        #         _db.collection("posts")
-        #         .where("uid", "in", batch)
-        #         .order_by("createdAt", direction=firestore.Query.DESCENDING)
-        #         .limit(limit_per_business * len(batch))
-        #     )
-        #     result.extend([doc.to_dict() | {"id": doc.id} for doc in query.stream()])
-        # return result
+        """
+        Fetch recent posts for a set of businesses.
+        Uses Firestore 'in' query (max 10 values), batched automatically.
+
+        DB reads: ceil(n / 10) — each read returns posts for up to 10 businesses.
+
+        limit_per_business caps posts per business so one active business
+        can't flood the entire feed.
+        """
+        if not business_ids:
+            return []
+
+        result: list[dict] = []
+        batch_size = 10
+
+        # Group posts keyed by business for per-business capping
+        by_biz: dict[str, list[dict]] = {}
+
+        for i in range(0, len(business_ids), batch_size):
+            batch = business_ids[i : i + batch_size]
+
+            query = (
+                _db.collection("posts")
+                .where("uid", "in", batch)
+                .order_by("createdAt", direction=firestore.Query.DESCENDING)
+                .limit(limit_per_business * len(batch))  # upper bound
+            )
+
+            for doc in query.stream():
+                post = _doc_to_dict(doc)
+                uid = post.get("uid", "")
+                by_biz.setdefault(uid, []).append(post)
+
+        # Apply per-business cap and flatten
+        for uid, posts in by_biz.items():
+            result.extend(posts[:limit_per_business])
+
+        return result
