@@ -1300,8 +1300,9 @@ export default function Profile() {
                                                                         : userData?.name
                                                                 }
                                                                 address={
-                                                                    userData?.locations?.address || "Location"
+                                                                    userData?.locationAddress || userData?.locations?.address || "Location"
                                                                 }
+                                                                isCurrentUser={isCurrentUser}
                                                             />
                                                         ) : (
                                                             <div className="flex flex-col justify-center items-center h-full bg-gray-50 p-6 gap-4">
