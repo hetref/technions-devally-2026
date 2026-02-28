@@ -237,3 +237,48 @@ class FirebaseDB:
             result.extend(posts[:limit_per_business])
 
         return result
+
+    # ── get_user_transactions ─────────────────────────────────────────────────
+
+    def get_user_transactions(self, user_id: str) -> list[dict]:
+        """
+        Fetch all transactions for a user from Firestore.
+
+        Firestore path:
+            transactions/{user_id}/user_transactions/{doc_id}
+
+        Returns a plain list[dict] — no pandas, no DataFrames.
+        Timestamps are converted to ISO-8601 strings so the analytics
+        models can parse them with pd.to_datetime().
+
+        DB reads: 1 subcollection stream (all transaction docs).
+        """
+        ref = (
+            _db.collection("transactions")
+            .document(str(user_id).strip())
+            .collection("user_transactions")
+        )
+
+        transactions = []
+        for doc in ref.stream():
+            data = doc.to_dict() or {}
+            data["id"]      = doc.id
+            data["user_id"] = str(user_id).strip()
+
+            # Convert Firestore Timestamps → ISO string so models can parse uniformly
+            ts = data.get("timestamp")
+            if hasattr(ts, "isoformat"):          # firebase_admin Timestamp
+                data["timestamp"] = ts.isoformat()
+            elif hasattr(ts, "_seconds"):          # raw proto Timestamp
+                from datetime import datetime, timezone
+                data["timestamp"] = datetime.fromtimestamp(
+                    ts._seconds, tz=timezone.utc
+                ).isoformat()
+
+            transactions.append(data)
+
+        logger.info(
+            f"get_user_transactions: fetched {len(transactions)} "
+            f"transactions for user '{user_id}'"
+        )
+        return transactions
