@@ -1,0 +1,634 @@
+"use client";
+import { useState, useEffect } from "react";
+import { db } from "@/lib/firebase";
+import {
+  collection, doc, getDocs, setDoc, updateDoc, query, orderBy
+} from "firebase/firestore";
+import {
+  AreaChart, Area, BarChart, Bar, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  Legend, PieChart, Pie, Cell
+} from "recharts";
+
+// ── Config ─────────────────────────────────────────────────────────────────
+const BUSINESS_ID = "FRqPHTSF5fdog5xgBK9O4vkF5qB3";
+const GST_COL = `businesses/${BUSINESS_ID}/gstReports`;
+
+const PIE_COLORS = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#818cf8"];
+const fmt = (n) => "₹" + Number(n || 0).toLocaleString("en-IN");
+const pct = (a, b) => b ? (((a - b) / b) * 100).toFixed(1) : null;
+
+const EMPTY_FORM = {
+  month: "", taxableSales: "", cgst: "", sgst: "",
+  totalPurchases: "", itcAvailable: "", categories: [],
+};
+
+// ── Tooltip ────────────────────────────────────────────────────────────────
+const TT_STYLE = {
+  backgroundColor: "#fff",
+  border: "1px solid #e5e7eb",
+  borderRadius: 10,
+  color: "#111827",
+  fontSize: 12,
+  boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+};
+
+// ── PDF ────────────────────────────────────────────────────────────────────
+async function downloadPDF(data) {
+  const { jsPDF } = await import("jspdf");
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const W = 210, m = 18;
+  let y = m;
+
+  // Header bar
+  doc.setFillColor(99, 102, 241);
+  doc.rect(0, 0, W, 16, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  doc.setTextColor(255, 255, 255);
+  doc.text("GST Monthly Summary — " + data.month, m, 11);
+  y = 28;
+
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(99, 102, 241);
+  doc.text("DevAlly  ·  Aryan Shinde  ·  PAN: QPUPS6963L  ·  contact@devally.in", m, y);
+  y += 4;
+  doc.setTextColor(156, 163, 175);
+  doc.text(`Generated: ${new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })}`, m, y);
+  y += 9;
+
+  doc.setDrawColor(229, 231, 235);
+  doc.setLineWidth(0.4);
+  doc.line(m, y, W - m, y);
+  y += 8;
+
+  // Table header
+  doc.setFillColor(249, 250, 251);
+  doc.roundedRect(m, y, W - m * 2, 8, 2, 2, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(107, 114, 128);
+  doc.text("DESCRIPTION", m + 4, y + 5.2);
+  doc.text("AMOUNT", W - m - 4, y + 5.2, { align: "right" });
+  y += 10;
+
+  const net = (Number(data.cgst) + Number(data.sgst)) - Number(data.itcAvailable);
+  const rows = [
+    ["Total Taxable Sales", fmt(data.taxableSales), false],
+    ["CGST Collected (9%)", fmt(data.cgst), false],
+    ["SGST Collected (9%)", fmt(data.sgst), false],
+    ["Total GST Collected", fmt(Number(data.cgst) + Number(data.sgst)), false],
+    ["Total Purchases", fmt(data.totalPurchases), false],
+    ["ITC Available (Credit)", fmt(data.itcAvailable), "green"],
+    ["Net Tax Payable", fmt(net), "red"],
+  ];
+
+  rows.forEach(([label, val, accent], i) => {
+    if (i % 2 === 0) { doc.setFillColor(249, 250, 251); doc.rect(m, y, W - m * 2, 8, "F"); }
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(55, 65, 81);
+    doc.text(label, m + 4, y + 5.5);
+    doc.setFont("helvetica", "bold");
+    if (accent === "green") doc.setTextColor(16, 185, 129);
+    else if (accent === "red") doc.setTextColor(239, 68, 68);
+    else doc.setTextColor(17, 24, 39);
+    doc.text(val, W - m - 4, y + 5.5, { align: "right" });
+    y += 8;
+  });
+
+  y += 8;
+  doc.setDrawColor(229, 231, 235);
+  doc.line(m, y, W - m, y);
+  y += 8;
+
+  doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(99, 102, 241);
+  doc.text("Key Insights", m, y); y += 7;
+  doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(75, 85, 99);
+  const util = (Number(data.itcAvailable) / (Number(data.cgst) + Number(data.sgst)) * 100).toFixed(1);
+  [
+    `ITC Utilization Ratio: ${util}% of total GST collected is offset by Input Tax Credit`,
+    `Effective Tax Rate: ${((net / data.taxableSales) * 100).toFixed(2)}% of taxable sales`,
+    `Purchase-to-Sales Ratio: ${((data.totalPurchases / data.taxableSales) * 100).toFixed(1)}%`,
+    `GST Savings via ITC: ${fmt(data.itcAvailable)}`,
+  ].forEach(ins => { doc.text("• " + ins, m, y); y += 6; });
+
+  y += 4;
+  doc.setFontSize(8); doc.setTextColor(156, 163, 175);
+  doc.line(m, y, W - m, y); y += 5;
+  doc.text("System-generated by DevAlly · For official filings, verify with your Chartered Accountant.", m, y);
+  doc.save(`GST_Summary_${data.month.replace(" ", "_")}.pdf`);
+}
+
+// ── Small components ───────────────────────────────────────────────────────
+function Badge({ children, color = "gray" }) {
+  const map = {
+    gray:   "bg-gray-100 text-gray-600",
+    indigo: "bg-indigo-50 text-indigo-600",
+    green:  "bg-emerald-50 text-emerald-600",
+    red:    "bg-red-50 text-red-600",
+    amber:  "bg-amber-50 text-amber-600",
+  };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${map[color]}`}>
+      {children}
+    </span>
+  );
+}
+
+function StatCard({ label, value, sub, delta, icon }) {
+  const d = parseFloat(delta);
+  const up = d >= 0;
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between mb-3">
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</span>
+        {icon && <span className="text-lg">{icon}</span>}
+      </div>
+      <div className="text-2xl font-bold text-gray-900 mb-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{value}</div>
+      {sub && <p className="text-xs text-gray-400">{sub}</p>}
+      {delta != null && (
+        <div className={`mt-2 text-xs font-semibold flex items-center gap-1 ${up ? "text-emerald-600" : "text-red-500"}`}>
+          <span>{up ? "↑" : "↓"}</span>
+          <span>{Math.abs(d)}% vs last month</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SectionHeader({ title, subtitle }) {
+  return (
+    <div className="mb-5">
+      <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{title}</h3>
+      {subtitle && <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>}
+    </div>
+  );
+}
+
+function FInput({ label, name, value, onChange, type = "text", required, placeholder, hint }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      <input type={type} name={name} value={value} onChange={onChange}
+        required={required} placeholder={placeholder}
+        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 transition-all placeholder:text-gray-300" />
+      {hint && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
+    </div>
+  );
+}
+
+// ── Main ───────────────────────────────────────────────────────────────────
+export default function GstReports() {
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [tab, setTab] = useState("summary");
+  const [showForm, setShowForm] = useState(false);
+  const [editingMonth, setEditingMonth] = useState(null);
+  const [selIdx, setSelIdx] = useState(0);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [catRow, setCatRow] = useState({ name: "", gst: "", rate: "18" });
+
+  const fetchReports = async () => {
+    setLoading(true);
+    try {
+      const snap = await getDocs(query(collection(db, GST_COL), orderBy("createdAt", "asc")));
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setReports(data);
+      if (data.length) setSelIdx(data.length - 1);
+    } catch (e) { console.error(e); }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchReports(); }, []);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const payload = {
+        month: form.month,
+        taxableSales: Number(form.taxableSales),
+        cgst: Number(form.cgst),
+        sgst: Number(form.sgst),
+        totalPurchases: Number(form.totalPurchases),
+        itcAvailable: Number(form.itcAvailable),
+        netTaxPayable: (Number(form.cgst) + Number(form.sgst)) - Number(form.itcAvailable),
+        categories: form.categories,
+        updatedAt: new Date(),
+        ...(editingMonth ? {} : { createdAt: new Date() }),
+      };
+      const ref = doc(db, GST_COL, form.month.replace(/\s+/g, "_"));
+      editingMonth ? await updateDoc(ref, payload) : await setDoc(ref, payload);
+      await fetchReports();
+      closeForm();
+    } catch (e) { alert("Save failed: " + e.message); }
+    setSaving(false);
+  };
+
+  const openEdit = (r) => {
+    setForm({ month: r.month, taxableSales: r.taxableSales, cgst: r.cgst, sgst: r.sgst, totalPurchases: r.totalPurchases, itcAvailable: r.itcAvailable, categories: r.categories || [] });
+    setEditingMonth(r.month); setShowForm(true);
+  };
+
+  const closeForm = () => { setShowForm(false); setEditingMonth(null); setForm(EMPTY_FORM); };
+  const handleChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+
+  const addCat = () => {
+    if (!catRow.name || !catRow.gst) return;
+    setForm(f => ({ ...f, categories: [...f.categories, { ...catRow, gst: Number(catRow.gst) }] }));
+    setCatRow({ name: "", gst: "", rate: "18" });
+  };
+  const removeCat = (i) => setForm(f => ({ ...f, categories: f.categories.filter((_, idx) => idx !== i) }));
+
+  const current = reports[selIdx];
+  const prev = reports[selIdx - 1];
+  const netAuto = (Number(form.cgst || 0) + Number(form.sgst || 0)) - Number(form.itcAvailable || 0);
+
+  const trendData = reports.map(r => ({
+    month: r.month?.split(" ")[0],
+    "GST Collected": r.cgst + r.sgst,
+    "Net Payable": r.netTaxPayable,
+    "ITC": r.itcAvailable,
+  }));
+
+  const itcData = reports.map(r => ({
+    month: r.month?.split(" ")[0],
+    ratio: Math.round((r.itcAvailable / (r.cgst + r.sgst)) * 100) || 0,
+  }));
+
+  const TABS = ["summary", "analytics"];
+
+  return (
+    <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'Plus Jakarta Sans', 'DM Sans', sans-serif" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');`}</style>
+
+      <div className="max-w-6xl mx-auto px-6 py-8">
+
+        {/* ── Page Header (matches Thikana style) ── */}
+        <div className="bg-white rounded-2xl border border-gray-200 px-6 py-5 mb-6 flex items-center gap-4">
+          <div className="w-11 h-11 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-xl flex-shrink-0">
+            🧾
+          </div>
+          <div className="flex-1">
+            <h1 className="text-lg font-bold text-gray-900">GST Reports</h1>
+            <p className="text-sm text-gray-500">View and manage monthly GST summaries, analytics, and downloadable reports.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {current && (
+              <button onClick={() => openEdit(current)}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                ✏️ Edit
+              </button>
+            )}
+            <button onClick={() => { setForm(EMPTY_FORM); setEditingMonth(null); setShowForm(true); }}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-indigo-200 bg-indigo-50 text-sm font-medium text-indigo-700 hover:bg-indigo-100 transition-colors">
+              + Add Month
+            </button>
+            {current && (
+              <button onClick={async () => { setDownloading(true); await downloadPDF(current); setDownloading(false); }}
+                disabled={downloading}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-60">
+                {downloading ? <>⟳ Generating...</> : <>⬇ Download PDF</>}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* ── Month selector + Tabs row ── */}
+        {reports.length > 0 && (
+          <div className="flex items-center justify-between mb-6">
+            {/* Tabs */}
+            <div className="flex bg-white border border-gray-200 rounded-xl p-1 gap-1">
+              {TABS.map(t => (
+                <button key={t} onClick={() => setTab(t)}
+                  className={`px-5 py-1.5 rounded-lg text-sm font-semibold capitalize transition-all ${tab === t ? "bg-indigo-600 text-white shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
+
+            {/* Month dropdown */}
+            <select value={selIdx} onChange={e => setSelIdx(Number(e.target.value))}
+              className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 outline-none focus:border-indigo-400 cursor-pointer">
+              {reports.map((r, i) => <option key={i} value={i}>{r.month}</option>)}
+            </select>
+          </div>
+        )}
+
+        {/* ── Loading ── */}
+        {loading && (
+          <div className="flex justify-center items-center py-40">
+            <div className="w-7 h-7 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
+          </div>
+        )}
+
+        {/* ── Empty state ── */}
+        {!loading && reports.length === 0 && (
+          <div className="bg-white rounded-2xl border border-gray-200 border-dashed flex flex-col items-center justify-center py-24 gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center text-3xl">📊</div>
+            <div className="text-center">
+              <h3 className="text-base font-bold text-gray-900 mb-1">No GST Reports Yet</h3>
+              <p className="text-sm text-gray-500">Add your first monthly GST report to get started.</p>
+            </div>
+            <button onClick={() => { setForm(EMPTY_FORM); setEditingMonth(null); setShowForm(true); }}
+              className="px-5 py-2.5 rounded-xl bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors">
+              + Add First Report
+            </button>
+          </div>
+        )}
+
+        {/* ════════ SUMMARY TAB ════════ */}
+        {!loading && current && tab === "summary" && (
+          <div className="space-y-6">
+            {/* Stat cards */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+              <StatCard label="Taxable Sales" value={fmt(current.taxableSales)} delta={prev ? pct(current.taxableSales, prev.taxableSales) : null} />
+              <StatCard label="CGST" value={fmt(current.cgst)} sub="@ 9%" delta={prev ? pct(current.cgst, prev.cgst) : null} />
+              <StatCard label="SGST" value={fmt(current.sgst)} sub="@ 9%" delta={prev ? pct(current.sgst, prev.sgst) : null} />
+              <StatCard label="Purchases" value={fmt(current.totalPurchases)} delta={prev ? pct(current.totalPurchases, prev.totalPurchases) : null} />
+              <StatCard label="ITC Available" value={fmt(current.itcAvailable)} sub="Input Tax Credit" delta={prev ? pct(current.itcAvailable, prev.itcAvailable) : null} />
+              <StatCard label="Net Tax Payable" value={fmt(current.netTaxPayable)} delta={prev ? pct(current.netTaxPayable, prev.netTaxPayable) : null} />
+            </div>
+
+            {/* Breakdown Table */}
+            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">GST Breakdown</h3>
+                  <p className="text-xs text-gray-400 mt-0.5">{current.month}</p>
+                </div>
+                <Badge color="indigo">{current.month}</Badge>
+              </div>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100">
+                    {["Description", "Rate", "Base Amount", "Tax Amount", "Type"].map(h => (
+                      <th key={h} className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { desc: "Outward Supplies (Sales)", rate: "18%", base: current.taxableSales, tax: current.cgst + current.sgst, type: "Output", tc: "indigo" },
+                    { desc: "CGST Component", rate: "9%", base: current.taxableSales, tax: current.cgst, type: "Output", tc: "indigo" },
+                    { desc: "SGST Component", rate: "9%", base: current.taxableSales, tax: current.sgst, type: "Output", tc: "indigo" },
+                    { desc: "Inward Supplies (Purchases)", rate: "18%", base: current.totalPurchases, tax: Math.round(current.totalPurchases * 0.18), type: "Input", tc: "gray" },
+                    { desc: "ITC Available", rate: "—", base: "—", tax: current.itcAvailable, type: "Credit", tc: "green" },
+                    { desc: "Net GST Liability", rate: "—", base: "—", tax: current.netTaxPayable, type: "Payable", tc: "red" },
+                  ].map((row, i) => (
+                    <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-3.5 font-medium text-gray-800">{row.desc}</td>
+                      <td className="px-6 py-3.5 text-gray-400">{row.rate}</td>
+                      <td className="px-6 py-3.5 font-mono text-gray-600">{typeof row.base === "number" ? fmt(row.base) : row.base}</td>
+                      <td className="px-6 py-3.5 font-mono font-bold text-gray-900">{fmt(row.tax)}</td>
+                      <td className="px-6 py-3.5"><Badge color={row.tc}>{row.type}</Badge></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ITC + Quick Numbers */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* ITC Donut */}
+              <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                <SectionHeader title="ITC Utilization" subtitle="How much of your GST is offset by Input Tax Credit" />
+                <div className="flex items-center gap-6">
+                  <div className="relative w-24 h-24 flex-shrink-0">
+                    <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                      <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f3f4f6" strokeWidth="3.5" />
+                      <circle cx="18" cy="18" r="15.9" fill="none" stroke="#6366f1" strokeWidth="3.5"
+                        strokeDasharray={`${Math.min(((current.itcAvailable / (current.cgst + current.sgst)) * 100), 100).toFixed(1)} 100`}
+                        strokeLinecap="round" />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-xl font-bold text-indigo-600">
+                        {((current.itcAvailable / (current.cgst + current.sgst)) * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">ITC offsets <strong className="text-indigo-600">{((current.itcAvailable / (current.cgst + current.sgst)) * 100).toFixed(1)}%</strong> of total GST collected this month.</p>
+                    <p className="text-xs text-gray-400">Higher ratio = stronger cash flow position</p>
+                    <Badge color="green">Savings: {fmt(current.itcAvailable)}</Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Numbers */}
+              <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                <SectionHeader title="Quick Numbers" />
+                <div className="space-y-3">
+                  {[
+                    ["Effective Tax Rate", ((current.netTaxPayable / current.taxableSales) * 100).toFixed(2) + "%", "indigo"],
+                    ["Purchase-to-Sales Ratio", ((current.totalPurchases / current.taxableSales) * 100).toFixed(1) + "%", "gray"],
+                    ["Gross GST Collected", fmt(current.cgst + current.sgst), "gray"],
+                    ["ITC Savings", fmt(current.itcAvailable), "green"],
+                  ].map(([k, v, c]) => (
+                    <div key={k} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                      <span className="text-sm text-gray-600">{k}</span>
+                      <Badge color={c}>{v}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ════════ ANALYTICS TAB ════════ */}
+        {!loading && current && tab === "analytics" && (
+          <>
+            {reports.length <= 1 ? (
+              <div className="bg-white rounded-2xl border border-gray-200 border-dashed flex flex-col items-center justify-center py-24 gap-3">
+                <div className="text-4xl">📈</div>
+                <p className="text-sm font-semibold text-gray-500">Add at least 2 months of data to see trend analytics.</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Trend Chart */}
+                <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                  <SectionHeader title="Month-over-Month GST Trend" subtitle="GST collected, net payable and ITC across months" />
+                  <ResponsiveContainer width="100%" height={250}>
+                    <AreaChart data={trendData}>
+                      <defs>
+                        <linearGradient id="gi" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#6366f1" stopOpacity={0.15} /><stop offset="95%" stopColor="#6366f1" stopOpacity={0} /></linearGradient>
+                        <linearGradient id="gr" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#ef4444" stopOpacity={0.12} /><stop offset="95%" stopColor="#ef4444" stopOpacity={0} /></linearGradient>
+                        <linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.12} /><stop offset="95%" stopColor="#10b981" stopOpacity={0} /></linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                      <XAxis dataKey="month" tick={{ fill: "#9ca3af", fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <YAxis tickFormatter={v => "₹" + (v / 1000) + "k"} tick={{ fill: "#9ca3af", fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={TT_STYLE} formatter={(v, n) => [fmt(v), n]} />
+                      <Legend wrapperStyle={{ fontSize: 12, color: "#6b7280" }} />
+                      <Area type="monotone" dataKey="GST Collected" stroke="#6366f1" fill="url(#gi)" strokeWidth={2} dot={{ fill: "#6366f1", r: 4, strokeWidth: 0 }} />
+                      <Area type="monotone" dataKey="Net Payable" stroke="#ef4444" fill="url(#gr)" strokeWidth={2} dot={{ fill: "#ef4444", r: 4, strokeWidth: 0 }} />
+                      <Area type="monotone" dataKey="ITC" stroke="#10b981" fill="url(#gg)" strokeWidth={2} dot={{ fill: "#10b981", r: 4, strokeWidth: 0 }} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* ITC Ratio Bar */}
+                  <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                    <SectionHeader title="ITC Utilization Ratio" subtitle="Monthly ITC as % of GST collected" />
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart data={itcData} barSize={28}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+                        <XAxis dataKey="month" tick={{ fill: "#9ca3af", fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <YAxis tickFormatter={v => v + "%"} tick={{ fill: "#9ca3af", fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={TT_STYLE} formatter={v => [v + "%", "ITC Utilization"]} />
+                        <Bar dataKey="ratio" radius={[6, 6, 0, 0]}>
+                          {itcData.map((_, i) => <Cell key={i} fill={`rgba(99,102,241,${0.4 + (i / Math.max(itcData.length, 1)) * 0.6})`} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Tax Liability Line */}
+                  <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                    <SectionHeader title="Tax Liability Growth" subtitle="Net payable month-over-month" />
+                    <ResponsiveContainer width="100%" height={200}>
+                      <LineChart data={trendData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                        <XAxis dataKey="month" tick={{ fill: "#9ca3af", fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <YAxis tickFormatter={v => "₹" + (v / 1000) + "k"} tick={{ fill: "#9ca3af", fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={TT_STYLE} formatter={(v, n) => [fmt(v), n]} />
+                        <Line type="monotone" dataKey="Net Payable" stroke="#ef4444" strokeWidth={2.5} dot={{ fill: "#ef4444", r: 5, strokeWidth: 0 }} activeDot={{ r: 7 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Category Pie */}
+                {current.categories?.length > 0 && (
+                  <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                    <SectionHeader title="Top GST Categories" subtitle={`Category-wise GST breakdown for ${current.month}`} />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                      <ResponsiveContainer width="100%" height={220}>
+                        <PieChart>
+                          <Pie data={current.categories} dataKey="gst" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={4}>
+                            {current.categories.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                          </Pie>
+                          <Tooltip contentStyle={TT_STYLE} formatter={(v, n) => [fmt(v), n]} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="space-y-3">
+                        {current.categories.map((c, i) => (
+                          <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-2.5 h-2.5 rounded-full" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                              <span className="text-sm text-gray-700">{c.name}</span>
+                              <Badge color="indigo">{c.rate}%</Badge>
+                            </div>
+                            <span className="text-sm font-semibold text-gray-900 font-mono">{fmt(c.gst)}</span>
+                          </div>
+                        ))}
+                        <div className="flex justify-between items-center pt-2">
+                          <span className="text-sm font-bold text-gray-700">Total</span>
+                          <span className="text-sm font-bold text-indigo-600 font-mono">{fmt(current.categories.reduce((s, c) => s + Number(c.gst), 0))}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* ════════ FORM MODAL ════════ */}
+      {showForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+          <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div>
+                <h3 className="text-base font-bold text-gray-900">{editingMonth ? `Update Report — ${editingMonth}` : "Add Monthly GST Report"}</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Data is saved directly to Firestore under this business.</p>
+              </div>
+              <button onClick={closeForm} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors text-lg">✕</button>
+            </div>
+
+            <form onSubmit={handleSave} className="p-6 space-y-5">
+              <FInput label="Month" name="month" value={form.month} onChange={handleChange} required placeholder="Feb 2026" hint="Format: MMM YYYY — used as Firestore document ID" />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FInput label="Taxable Sales (₹)" name="taxableSales" value={form.taxableSales} onChange={handleChange} type="number" required placeholder="e.g. 250000" />
+                <FInput label="CGST Collected (₹)" name="cgst" value={form.cgst} onChange={handleChange} type="number" required placeholder="e.g. 22500" />
+                <FInput label="SGST Collected (₹)" name="sgst" value={form.sgst} onChange={handleChange} type="number" required placeholder="e.g. 22500" />
+                <FInput label="Total Purchases (₹)" name="totalPurchases" value={form.totalPurchases} onChange={handleChange} type="number" required placeholder="e.g. 180000" />
+                <FInput label="ITC Available (₹)" name="itcAvailable" value={form.itcAvailable} onChange={handleChange} type="number" required placeholder="e.g. 16200" />
+
+                {/* Auto net payable */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Net Tax Payable <span className="text-gray-400 font-normal">(auto)</span></label>
+                  <div className={`rounded-lg border px-3 py-2 text-sm font-bold ${netAuto >= 0 ? "border-red-200 bg-red-50 text-red-600" : "border-emerald-200 bg-emerald-50 text-emerald-600"}`}>
+                    {fmt(netAuto)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Categories */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-2">
+                  GST Categories <span className="text-gray-400 font-normal">(optional — powers the pie chart in Analytics)</span>
+                </label>
+                <div className="flex gap-2 mb-3">
+                  <input placeholder="Category name" value={catRow.name} onChange={e => setCatRow(r => ({ ...r, name: e.target.value }))}
+                    className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-indigo-400" />
+                  <input placeholder="GST ₹" type="number" value={catRow.gst} onChange={e => setCatRow(r => ({ ...r, gst: e.target.value }))}
+                    className="w-24 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-indigo-400" />
+                  <input placeholder="Rate%" value={catRow.rate} onChange={e => setCatRow(r => ({ ...r, rate: e.target.value }))}
+                    className="w-16 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-indigo-400" />
+                  <button type="button" onClick={addCat}
+                    className="px-3.5 py-2 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 text-sm font-bold hover:bg-indigo-100 transition-colors">
+                    +
+                  </button>
+                </div>
+
+                {form.categories.length > 0 && (
+                  <div className="space-y-1.5 bg-gray-50 rounded-xl p-3">
+                    {form.categories.map((c, i) => (
+                      <div key={i} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-gray-100">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                          <span className="text-sm text-gray-700">{c.name}</span>
+                          <Badge color="indigo">{c.rate}%</Badge>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-mono text-gray-700">₹{Number(c.gst).toLocaleString("en-IN")}</span>
+                          <button type="button" onClick={() => removeCat(i)} className="text-red-400 hover:text-red-600 text-xs font-bold">✕</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={closeForm}
+                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+                  Cancel
+                </button>
+                <button type="submit" disabled={saving}
+                  className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-60">
+                  {saving ? "Saving..." : editingMonth ? "Update Report" : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

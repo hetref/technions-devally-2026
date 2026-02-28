@@ -276,7 +276,7 @@ const MainNavbar = () => {
                       <span>Add Photos</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="#" className="flex items-center gap-2">
+                      <Link href="/add-product" className="flex items-center gap-2">
                         <span>Add Product</span>
                       </Link>
                     </DropdownMenuItem>
