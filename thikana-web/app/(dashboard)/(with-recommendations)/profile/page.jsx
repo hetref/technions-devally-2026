@@ -654,14 +654,9 @@ export default function Profile() {
         return (
             <div className="space-y-4">
                 {posts.map((post) => (
-                    <Card
-                        key={post.id}
-                        className="cursor-pointer hover:shadow-md transition-shadow border border-gray-100"
-                    >
-                        <CardContent className="pt-6">
-                            <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} />
-                        </CardContent>
-                    </Card>
+                    <div key={post.id} className="w-full">
+                        <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} />
+                    </div>
                 ))}
                 {hasMore && (
                     <div className="flex justify-center pt-4">
@@ -707,11 +702,9 @@ export default function Profile() {
 
     const renderSavedPostCard = useCallback(
         (post) => (
-            <Card key={post.id} className="cursor-pointer hover:shadow-md transition-shadow border border-gray-100">
-                <CardContent className="pt-6">
-                    <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} />
-                </CardContent>
-            </Card>
+            <div key={post.id} className="w-full">
+                <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} />
+            </div>
         ),
         [router]
     );
@@ -1032,7 +1025,7 @@ export default function Profile() {
 
     return (
         <div className="min-h-screen bg-transparent">
-            <div className="max-w-5xl mx-auto px-4 py-8">
+            <div className="max-w-[1400px] w-full px-4 py-8">
                 <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
                     {/* Main content */}
                     <main className="flex-1 min-w-0 space-y-8">
@@ -1043,41 +1036,44 @@ export default function Profile() {
                                 {/* Profile Card - Enhanced with Fixed Spacing */}
                                 <Card className="overflow-hidden bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-3xl">
                                     {/* Cover Image with Gradient Overlay */}
-                                    <div className="relative h-48 sm:h-56 lg:h-64 w-full overflow-hidden">
+                                    <div className="relative h-48 sm:h-56 lg:h-64 w-full overflow-hidden bg-gray-100 flex items-center justify-center">
                                         {isBusinessUser && (
-                                            <Dialog>
-                                                <DialogTrigger className="z-30 w-full h-full group">
-                                                    <div className="relative w-full h-full">
-                                                        <Image
-                                                            src={userData?.coverPic || "/coverimg.png"}
-                                                            width={1200}
-                                                            height={256}
-                                                            alt="Cover Image"
-                                                            className="object-cover w-full h-full transition-all duration-500 group-hover:scale-105"
-                                                            priority
-                                                        />
-                                                        {/* Gradient overlay */}
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                                                    </div>
-                                                </DialogTrigger>
-                                                <DialogContent className="sm:max-w-2xl">
-                                                    <DialogHeader>
-                                                        <DialogTitle className="text-2xl font-bold">
-                                                            Cover Image
-                                                        </DialogTitle>
-                                                    </DialogHeader>
-                                                    <div className="mt-4 rounded-2xl overflow-hidden">
-                                                        <Image
-                                                            src={userData?.coverPic || "/coverimg.png"}
-                                                            width={1200}
-                                                            height={600}
-                                                            alt="Cover Image"
-                                                            className="w-full object-cover"
-                                                        />
-                                                    </div>
-                                                </DialogContent>
-                                            </Dialog>
+                                            userData?.coverPic ? (
+                                                <Dialog>
+                                                    <DialogTrigger className="z-30 w-full h-full group">
+                                                        <div className="relative w-full h-full">
+                                                            <Image
+                                                                src={userData.coverPic}
+                                                                width={1200}
+                                                                height={256}
+                                                                alt="Cover Image"
+                                                                className="object-cover w-full h-full transition-all duration-500 group-hover:scale-105"
+                                                                priority
+                                                            />
+                                                            {/* Gradient overlay */}
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                                                        </div>
+                                                    </DialogTrigger>
+                                                    <DialogContent className="sm:max-w-2xl">
+                                                        <DialogHeader>
+                                                            <DialogTitle className="text-2xl font-bold">
+                                                                Cover Image
+                                                            </DialogTitle>
+                                                        </DialogHeader>
+                                                        <div className="mt-4 rounded-2xl overflow-hidden relative h-[400px]">
+                                                            <Image
+                                                                src={userData.coverPic}
+                                                                fill
+                                                                alt="Cover Image"
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </div>
+                                                    </DialogContent>
+                                                </Dialog>
+                                            ) : (
+                                                <span className="text-gray-500 font-medium">No Cover Image Uploaded</span>
+                                            )
                                         )}
                                     </div>
 
@@ -1092,17 +1088,23 @@ export default function Profile() {
                                         >
                                             <Dialog>
                                                 <DialogTrigger>
-                                                    <div className="relative group cursor-pointer">
+                                                    <div className="relative group cursor-pointer bg-white rounded-full">
                                                         <Avatar className="w-24 h-24 sm:w-28 sm:h-28 border-4 border-white shadow-2xl ring-4 ring-white/50 transition-all duration-300 group-hover:scale-105 group-hover:shadow-3xl">
-                                                            <AvatarImage
-                                                                src={userData?.profilePic || "/avatar.png"}
-                                                                alt={userData?.name}
-                                                                className="object-cover"
-                                                            />
-                                                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-2xl">
-                                                                {isBusinessUser
-                                                                    ? userData?.businessName?.charAt(0) || "B"
-                                                                    : userData?.name?.charAt(0) || "U"}
+                                                            {userData?.profilePic && (
+                                                                <AvatarImage
+                                                                    src={userData.profilePic}
+                                                                    alt={userData?.name}
+                                                                    className="object-cover"
+                                                                />
+                                                            )}
+                                                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-sm text-center">
+                                                                {userData?.profilePic ? (
+                                                                    isBusinessUser
+                                                                        ? userData?.businessName?.charAt(0) || "B"
+                                                                        : userData?.name?.charAt(0) || "U"
+                                                                ) : (
+                                                                    <span className="text-xs px-2 truncate leading-tight">No Profile Image</span>
+                                                                )}
                                                             </AvatarFallback>
                                                         </Avatar>
                                                         {/* Subtle hover ring */}
@@ -1143,23 +1145,6 @@ export default function Profile() {
                                                                 {isBusinessUser
                                                                     ? userData?.businessName || userData?.name
                                                                     : userData?.name}
-                                                                {isBusinessUser &&
-                                                                    userData?.role === "member" ? (
-                                                                    <Badge
-                                                                        variant="outline"
-                                                                        className="bg-gradient-to-r from-violet-50 to-violet-100 text-violet-700 border-violet-200 px-3 py-1 text-sm font-medium rounded-full"
-                                                                    >
-                                                                        Member
-                                                                    </Badge>
-
-                                                                ) : isBusinessUser ? (
-                                                                    <Badge
-                                                                        variant="outline"
-                                                                        className="bg-gradient-to-r from-amber-50 to-orange-100 text-amber-700 border-amber-200 px-3 py-1 text-sm font-medium rounded-full"
-                                                                    >
-                                                                        Headquarters
-                                                                    </Badge>
-                                                                ) : null}
                                                             </h1>
 
                                                             <div className="flex items-center text-gray-600 gap-2 text-lg">
@@ -1319,13 +1304,21 @@ export default function Profile() {
                                                                 }
                                                             />
                                                         ) : (
-                                                            <div className="flex justify-center items-center h-full bg-gray-50">
+                                                            <div className="flex flex-col justify-center items-center h-full bg-gray-50 p-6 gap-4">
                                                                 <div className="text-center">
                                                                     <MapPinIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                                                                     <p className="text-gray-500 font-medium">
                                                                         No location data available
                                                                     </p>
                                                                 </div>
+                                                                {isCurrentUser && (
+                                                                    <Button asChild className="rounded-full shadow-lg h-auto py-3 px-6">
+                                                                        <Link href="/my-location">
+                                                                            <MapPinIcon className="w-4 h-4 mr-2" />
+                                                                            Add Your Location
+                                                                        </Link>
+                                                                    </Button>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </div>
@@ -1366,14 +1359,14 @@ export default function Profile() {
                                     <Suspense fallback={<LoadingSpinner />}>
                                         <Card className="border-0 shadow-xl overflow-hidden bg-white/80 backdrop-blur-sm rounded-3xl">
                                             <Tabs defaultValue="posts" className="w-full">
-                                                <div className="border-b border-gray-200 overflow-x-auto scrollbar-hide bg-gradient-to-r from-gray-50 to-gray-100">
-                                                    <TabsList className="justify-between h-auto p-2 bg-transparent w-full flex gap-1">
+                                                <div className="border-b border-gray-200 overflow-x-auto scrollbar-hide">
+                                                    <TabsList className="justify-start h-auto p-0 bg-transparent w-full flex gap-6">
                                                         <TabsTrigger
                                                             value="posts"
                                                             className={cn(
-                                                                "rounded-2xl flex-1 transition-all duration-300",
-                                                                "data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-lg",
-                                                                "px-4 py-4 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-white/50"
+                                                                "rounded-none transition-all duration-300 border-b-2 border-transparent",
+                                                                "data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none",
+                                                                "pb-4 pt-2 font-semibold text-sm flex items-center justify-center gap-2 hover:text-blue-600"
                                                             )}
                                                             title="View Posts"
                                                         >
@@ -1391,9 +1384,9 @@ export default function Profile() {
                                                             value="likes"
                                                             title="Liked Posts"
                                                             className={cn(
-                                                                "rounded-2xl flex-1 transition-all duration-300",
-                                                                "data-[state=active]:bg-white data-[state=active]:text-red-600 data-[state=active]:shadow-lg",
-                                                                "px-4 py-4 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-white/50"
+                                                                "rounded-none transition-all duration-300 border-b-2 border-transparent",
+                                                                "data-[state=active]:border-red-600 data-[state=active]:text-red-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none",
+                                                                "pb-4 pt-2 font-semibold text-sm flex items-center justify-center gap-2 hover:text-red-600"
                                                             )}
                                                         >
                                                             <div className="p-1.5 rounded-lg bg-red-100">
@@ -1406,9 +1399,9 @@ export default function Profile() {
                                                             value="photos"
                                                             title="Photos"
                                                             className={cn(
-                                                                "rounded-2xl flex-1 transition-all duration-300",
-                                                                "data-[state=active]:bg-white data-[state=active]:text-green-600 data-[state=active]:shadow-lg",
-                                                                "px-4 py-4 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-white/50"
+                                                                "rounded-none transition-all duration-300 border-b-2 border-transparent",
+                                                                "data-[state=active]:border-green-600 data-[state=active]:text-green-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none",
+                                                                "pb-4 pt-2 font-semibold text-sm flex items-center justify-center gap-2 hover:text-green-600"
                                                             )}
                                                         >
                                                             <div className="p-1.5 rounded-lg bg-green-100">
@@ -1424,9 +1417,9 @@ export default function Profile() {
                                                                     title="Products"
                                                                     value="products"
                                                                     className={cn(
-                                                                        "rounded-2xl flex-1 transition-all duration-300",
-                                                                        "data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-lg",
-                                                                        "px-4 py-4 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-white/50"
+                                                                        "rounded-none transition-all duration-300 border-b-2 border-transparent",
+                                                                        "data-[state=active]:border-orange-600 data-[state=active]:text-orange-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none",
+                                                                        "pb-4 pt-2 font-semibold text-sm flex items-center justify-center gap-2 hover:text-orange-600"
                                                                     )}
                                                                 >
                                                                     <div className="p-1.5 rounded-lg bg-orange-100">
@@ -1445,9 +1438,9 @@ export default function Profile() {
                                                                     value="services"
                                                                     title="Services"
                                                                     className={cn(
-                                                                        "rounded-2xl flex-1 transition-all duration-300",
-                                                                        "data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-lg",
-                                                                        "px-4 py-4 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-white/50"
+                                                                        "rounded-none transition-all duration-300 border-b-2 border-transparent",
+                                                                        "data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none",
+                                                                        "pb-4 pt-2 font-semibold text-sm flex items-center justify-center gap-2 hover:text-indigo-600"
                                                                     )}
                                                                 >
                                                                     <div className="p-1.5 rounded-lg bg-indigo-100">
@@ -1466,9 +1459,9 @@ export default function Profile() {
                                                                     value="properties"
                                                                     title="Properties"
                                                                     className={cn(
-                                                                        "rounded-2xl flex-1 transition-all duration-300",
-                                                                        "data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-lg",
-                                                                        "px-4 py-4 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-white/50"
+                                                                        "rounded-none transition-all duration-300 border-b-2 border-transparent",
+                                                                        "data-[state=active]:border-teal-600 data-[state=active]:text-teal-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none",
+                                                                        "pb-4 pt-2 font-semibold text-sm flex items-center justify-center gap-2 hover:text-teal-600"
                                                                     )}
                                                                 >
                                                                     <div className="p-1.5 rounded-lg bg-teal-100">
@@ -1484,9 +1477,9 @@ export default function Profile() {
                                                             value="saved"
                                                             title="Saved Posts"
                                                             className={cn(
-                                                                "rounded-2xl flex-1 transition-all duration-300",
-                                                                "data-[state=active]:bg-white data-[state=active]:text-pink-600 data-[state=active]:shadow-lg",
-                                                                "px-4 py-4 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-white/50"
+                                                                "rounded-none transition-all duration-300 border-b-2 border-transparent",
+                                                                "data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none",
+                                                                "pb-4 pt-2 font-semibold text-sm flex items-center justify-center gap-2 hover:text-pink-600"
                                                             )}
                                                         >
                                                             <div className="p-1.5 rounded-lg bg-pink-100">
@@ -1499,9 +1492,9 @@ export default function Profile() {
                                                             value="orders"
                                                             title="Your Orders"
                                                             className={cn(
-                                                                "rounded-2xl flex-1 transition-all duration-300",
-                                                                "data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-lg",
-                                                                "px-4 py-4 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-white/50"
+                                                                "rounded-none transition-all duration-300 border-b-2 border-transparent",
+                                                                "data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none",
+                                                                "pb-4 pt-2 font-semibold text-sm flex items-center justify-center gap-2 hover:text-emerald-600"
                                                             )}
                                                         >
                                                             <div className="p-1.5 rounded-lg bg-emerald-100">
@@ -1559,14 +1552,9 @@ export default function Profile() {
                                                                 </div>
                                                             ) : (
                                                                 likedPosts.map((post, index) => (
-                                                                    <Card
-                                                                        key={index}
-                                                                        className="cursor-pointer hover:shadow-2xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm shadow-lg rounded-3xl hover:-translate-y-1"
-                                                                    >
-                                                                        <CardContent className="p-6">
-                                                                            <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} />
-                                                                        </CardContent>
-                                                                    </Card>
+                                                                    <div key={index} className="w-full">
+                                                                        <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} />
+                                                                    </div>
                                                                 ))
                                                             )}
                                                         </div>
@@ -1965,15 +1953,15 @@ export default function Profile() {
                                     <Suspense fallback={<LoadingSpinner />}>
                                         <Card className="border-0 shadow-xl overflow-hidden bg-white/80 backdrop-blur-sm rounded-3xl">
                                             <Tabs defaultValue="saved" className="w-full">
-                                                <div className="border-b border-gray-200 overflow-x-auto scrollbar-hide bg-gradient-to-r from-gray-50 to-gray-100">
-                                                    <TabsList className="justify-between h-auto p-2 bg-transparent w-full flex gap-1">
+                                                <div className="border-b border-gray-200 overflow-x-auto scrollbar-hide">
+                                                    <TabsList className="justify-start h-auto p-0 bg-transparent w-full flex gap-6">
                                                         <TabsTrigger
                                                             title="Saved Posts"
                                                             value="saved"
                                                             className={cn(
-                                                                "rounded-2xl flex-1 transition-all duration-300",
-                                                                "data-[state=active]:bg-white data-[state=active]:text-pink-600 data-[state=active]:shadow-lg",
-                                                                "px-6 py-4 font-semibold text-sm flex items-center justify-center gap-3 hover:bg-white/50"
+                                                                "rounded-none transition-all duration-300 border-b-2 border-transparent",
+                                                                "data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none",
+                                                                "pb-4 pt-2 font-semibold text-sm flex items-center justify-center gap-3 hover:text-pink-600"
                                                             )}
                                                         >
                                                             <div className="p-1.5 rounded-lg bg-pink-100">
@@ -1985,9 +1973,9 @@ export default function Profile() {
                                                             title="Liked Posts"
                                                             value="likes"
                                                             className={cn(
-                                                                "rounded-2xl flex-1 transition-all duration-300",
-                                                                "data-[state=active]:bg-white data-[state=active]:text-red-600 data-[state=active]:shadow-lg",
-                                                                "px-6 py-4 font-semibold text-sm flex items-center justify-center gap-3 hover:bg-white/50"
+                                                                "rounded-none transition-all duration-300 border-b-2 border-transparent",
+                                                                "data-[state=active]:border-red-600 data-[state=active]:text-red-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none",
+                                                                "pb-4 pt-2 font-semibold text-sm flex items-center justify-center gap-3 hover:text-red-600"
                                                             )}
                                                         >
                                                             <div className="p-1.5 rounded-lg bg-red-100">
@@ -1999,9 +1987,9 @@ export default function Profile() {
                                                             title="Your Orders"
                                                             value="orders"
                                                             className={cn(
-                                                                "rounded-2xl flex-1 transition-all duration-300",
-                                                                "data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-lg",
-                                                                "px-6 py-4 font-semibold text-sm flex items-center justify-center gap-3 hover:bg-white/50"
+                                                                "rounded-none transition-all duration-300 border-b-2 border-transparent",
+                                                                "data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none",
+                                                                "pb-4 pt-2 font-semibold text-sm flex items-center justify-center gap-3 hover:text-emerald-600"
                                                             )}
                                                         >
                                                             <div className="p-1.5 rounded-lg bg-emerald-100">
@@ -2077,14 +2065,9 @@ export default function Profile() {
                                                                 </div>
                                                             ) : (
                                                                 likedPosts.map((post, index) => (
-                                                                    <Card
-                                                                        key={index}
-                                                                        className="cursor-pointer hover:shadow-2xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm shadow-lg rounded-3xl hover:-translate-y-1"
-                                                                    >
-                                                                        <CardContent className="p-6">
-                                                                            <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} />
-                                                                        </CardContent>
-                                                                    </Card>
+                                                                    <div key={index} className="w-full">
+                                                                        <PostCard post={post} onView={() => router.push(`/feed/${post.id || post.postId}`)} />
+                                                                    </div>
                                                                 ))
                                                             )}
                                                         </div>
