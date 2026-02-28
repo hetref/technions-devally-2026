@@ -8,7 +8,7 @@
 // Prisma removed for Thikana-integration
 
 /**
- * Returns a <script> tag that loads tracker.js from the SitePilot app server.
+ * Returns a <script> tag that loads tracker.js from the Thikana app server.
  *
  * The tracker.js file lives in public/tracker.js of this Next.js app, so it is
  * served at {APP_URL}/tracker.js. By loading it via src we get:
@@ -766,7 +766,7 @@ function generateCSS(theme) {
     theme?.fontFamily || "Inter, system-ui, -apple-system, sans-serif";
   const headingFont = theme?.headingFont || fontFamily;
 
-  return `/* SitePilot — Generated Styles */
+  return `/* Thikana — Generated Styles */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
@@ -908,7 +908,7 @@ a { transition: color 0.2s, opacity 0.2s; }
 // ============================================================================
 
 function generateJS() {
-  return `/* SitePilot — Generated JS */
+  return `/* Thikana — Generated JS */
 document.addEventListener('DOMContentLoaded', function() {
   // Smooth scroll for anchor links
   document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
@@ -988,7 +988,7 @@ document.addEventListener('DOMContentLoaded', function() {
 export async function convertPageToHtml(
   theme,
   page,
-  siteName = "SitePilot Site",
+  siteName = "Thikana Site",
   opts = {},
 ) {
   if (!page) throw new Error("Page is required");
@@ -1033,7 +1033,7 @@ export async function convertPageToHtml(
   const js = generateJS() + additionalJS;
 
   // Resolve the app base URL — this is where tracker.js is served from
-  const appBaseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.sitepilot.devally.in';
+  const appBaseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.Thikana.devally.in';
   const trackerTag = buildTrackerTag(page.siteId, page.slug, appBaseUrl);
 
   const html = `<!DOCTYPE html>
@@ -1075,7 +1075,7 @@ export function convertJsonToHtml(layoutJSON, pageId) {
 
   const theme = layoutJSON.theme || {};
   const seo = page.seo || {};
-  const siteName = layoutJSON.site?.name || "SitePilot Site";
+  const siteName = layoutJSON.site?.name || "Thikana Site";
 
   // Render all containers
   const bodyContent = (page.layout || [])
@@ -1086,7 +1086,7 @@ export function convertJsonToHtml(layoutJSON, pageId) {
   const css = generateCSS(theme);
   const js = generateJS();
 
-  const appBaseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.sitepilot.devally.in';
+  const appBaseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.Thikana.devally.in';
   const pageSiteId = page.siteId || layoutJSON.site?.id || '';
   const trackerTag = buildTrackerTag(pageSiteId, page.slug || '/', appBaseUrl);
 
