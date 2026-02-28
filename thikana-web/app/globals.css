@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
+/* @import "shadcn/tailwind.css"; */
 
 @custom-variant dark (&:is(.dark *));
 
@@ -131,7 +131,28 @@
 
   body {
     @apply bg-background text-foreground transition-colors duration-300;
+    font-family: var(--font-body), 'Plus Jakarta Sans', system-ui, sans-serif;
     top: 0 !important;
+  }
+
+  /* Apply Bricolage Grotesque to all heading levels */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading), 'Bricolage Grotesque', system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .font-heading {
+    font-family: var(--font-heading), 'Bricolage Grotesque', system-ui, sans-serif;
+  }
+
+  .font-body {
+    font-family: var(--font-body), 'Manrope', system-ui, sans-serif;
   }
 
   .text-2xs {
