@@ -8,21 +8,24 @@ Endpoints:
   GET /analytics/anomalies/{user_id}         ← anomaly detection
   GET /analytics/insights/{user_id}          ← spending insights
   GET /analytics/recommendations/{user_id}   ← expense recommendations
+  GET /analytics/predictions/{user_id}       ← next-month spending forecast
 """
 
 import json
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query
 
-from models.anomaly_detector  import AnomalyDetector
+from models.anomaly_detector   import AnomalyDetector
 from models.spending_insights  import SpendingInsights
 from models.expense_recommender import ExpenseRecommender
+from models.spending_predictor  import SpendingPredictor
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 _detector    = AnomalyDetector()    # stateless — shared safely
 _insights    = SpendingInsights()   # stateless — shared safely
 _recommender = ExpenseRecommender() # stateless — shared safely
+_predictor   = SpendingPredictor()  # stateless — shared safely
 
 # ── Data loading helper (mock only) ──────────────────────────────────────────
 
@@ -133,5 +136,26 @@ def get_recommendations(
     try:
         transactions = _get_transactions(user_id)
         return _recommender.recommend(transactions, user_id, monthly_income)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/predictions/{user_id}")
+def get_predictions(user_id: str):
+    """
+    Predict next month's spending per category using weighted moving average
+    with trend adjustment.
+
+    Each prediction includes:
+      - predicted:    expected total spend for the category next month
+      - lower_bound:  predicted - 1 std dev (68% likely to be above this)
+      - upper_bound:  predicted + 1 std dev (68% likely to be below this)
+      - confidence:   'high' (3+ stable months) | 'medium' | 'low'
+      - trend:        'increasing' | 'decreasing' | 'stable'
+      - trend_pct:    average month-over-month % change
+    """
+    try:
+        transactions = _get_transactions(user_id)
+        return _predictor.predict(transactions, user_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
