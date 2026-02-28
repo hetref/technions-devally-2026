@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
-import { doc, getDoc, serverTimestamp, setDoc, deleteDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc, deleteDoc, updateDoc, increment } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { v4 as uuidv4 } from "uuid";
 import { useRouter } from "next/navigation";
@@ -211,9 +211,12 @@ const CreatePost = () => {
             await setDoc(doc(db, "posts", postId), {
                 uid: auth.currentUser.uid,
                 title,
+                caption: title,
                 content: description,
                 mediaUrl: downloadURL,
+                imageUrl: downloadURL,
                 businessType,
+                likeCount: 0,
                 createdAt: serverTimestamp(),
                 interactions: {
                     likeCount: 0,
@@ -222,6 +225,12 @@ const CreatePost = () => {
                     lastWeekLikes: 0,
                     lastWeekViews: 0,
                 },
+            });
+
+            // Update business post count for recommendations API
+            await updateDoc(doc(db, "businesses", auth.currentUser.uid), {
+                postCount: increment(1),
+                lastPostedAt: serverTimestamp(),
             });
 
             router.push("/");
@@ -264,6 +273,14 @@ const CreatePost = () => {
         setIsDeleting(true);
         try {
             await deleteDoc(doc(db, "posts", editData.postId));
+
+            // Decrement business post count for recommendations API
+            if (auth.currentUser?.uid) {
+                await updateDoc(doc(db, "businesses", auth.currentUser.uid), {
+                    postCount: increment(-1),
+                });
+            }
+
             toast.success("Post deleted successfully!");
             setShowDeleteAlert(false);
             // Optionally redirect or refresh posts

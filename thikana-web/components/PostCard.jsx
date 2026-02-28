@@ -385,7 +385,16 @@ function PostCard({ post, onView, showDistance, distanceText, compact = false })
   const handleDeletePost = async () => {
     setIsDeleting(true);
     try {
+      const postBusinessId = post?.uid || post?.authorId;
       await deleteDoc(doc(db, "posts", post.postId));
+
+      // Decrement business post count for recommendation API
+      if (postBusinessId) {
+        await updateDoc(doc(db, "businesses", postBusinessId), {
+          postCount: increment(-1),
+        });
+      }
+
       toast.success("Post deleted successfully!");
       setShowDeleteAlert(false);
       router.refresh();

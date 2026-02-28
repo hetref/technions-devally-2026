@@ -153,6 +153,7 @@ const BusinessRegistration = () => {
             const business = {
                 businessName,
                 business_type: finalBusinessType,
+                businessType: finalBusinessType,
                 business_categories: businessCategories,
                 adminName: firstName + " " + lastName,
                 email,
@@ -163,6 +164,8 @@ const BusinessRegistration = () => {
                 panCard,
                 panVerified: true,
                 panDetails,
+                postCount: 0,
+                lastPostedAt: null,
                 createdAt: new Date(),
             };
 
