@@ -98,17 +98,6 @@ import { cn } from "@/lib/utils";
 import ShowServicesTabContent from "@/components/profile/ShowServicesTabContent";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useReactToPrint } from "react-to-print";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
