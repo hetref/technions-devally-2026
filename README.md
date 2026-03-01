@@ -385,44 +385,44 @@ The frontend is a **Next.js 16** (App Router) full-stack application with React 
 
 ```mermaid
 flowchart TB
-    Browser([Browser / User])
-    
-    subgraph Next["Next.js 16 App (thikana-web)"]
+    Browser(["Browser / User"])
+
+    subgraph Next["Next.js 16 App - thikana-web"]
         direction TB
-        PUB[Public Pages\n/ About / Pricing / Contact]
-        AUTH[Auth Pages\n/login · /register]
-        
-        subgraph Dashboard["(dashboard) Route Group"]
-            DASH[/dashboard]
-            FEED[/feed]
-            PROFILE[/profile]
-            SEARCH[/search]
-            NOTIF[/notifications]
-            MAP[/map]
-            GST[/gst-reports]
-            WEB[/websites]
-            CREATE[/posts · /add-product\n/add-bulk-products]
-            CART[/cart]
+        PUB["Public Pages\nHome / About / Pricing / Contact"]
+        AUTH["Auth Pages\nlogin · register"]
+
+        subgraph Dashboard["dashboard Route Group"]
+            DASH["/dashboard"]
+            FEED["/feed"]
+            PROFILE["/profile"]
+            SEARCH["/search"]
+            NOTIF["/notifications"]
+            MAP["/map"]
+            GST["/gst-reports"]
+            WEB["/websites"]
+            CREATE["/posts · /add-product\n/add-bulk-products"]
+            CART["/cart"]
         end
-        
-        subgraph API["app/api/ (Route Handlers)"]
-            APIFEED[/api/feed]
-            APIDISC[/api/discovery]
-            APIAI[/api/ai]
-            RAZORPAY[/api/razorpay]
-            MAPS[/api/maps-key]
-            EMAIL[/api/send-order-email]
-            CONTENT[/api/generate-content]
+
+        subgraph API["app/api Route Handlers"]
+            APIFEED["/api/feed"]
+            APIDISC["/api/discovery"]
+            APIAI["/api/ai"]
+            RAZORPAY["/api/razorpay"]
+            MAPS["/api/maps-key"]
+            EMAIL["/api/send-order-email"]
+            CONTENT["/api/generate-content"]
         end
     end
 
     subgraph Services["External Services"]
-        FB[(Firebase\nAuth + Firestore\n+ Storage)]
-        ALG[Algolia\nSearch]
-        RZ[Razorpay\nPayments]
-        GMAPS[Google Maps\nAPI]
-        GEM[Google Gemini\nAI]
-        THAPI[thikana-api\nPython FastAPI]
+        FB[("Firebase\nAuth + Firestore + Storage")]
+        ALG["Algolia\nSearch"]
+        RZ["Razorpay\nPayments"]
+        GMAPS["Google Maps\nAPI"]
+        GEM["Google Gemini\nAI"]
+        THAPI["thikana-api\nPython FastAPI"]
     end
 
     Browser --> PUB & AUTH & Dashboard
@@ -570,7 +570,7 @@ thikana-web/
 
 ```mermaid
 flowchart LR
-    Root(["/"])
+    Root(["HOME /"])
     About["/about"]
     Pricing["/pricing"]
     Contact["/contact"]
@@ -586,7 +586,7 @@ flowchart LR
     Inventory["/profile/inventory"]
     Services["/profile/services"]
     Settings["/profile/settings"]
-    PubProfile["/:username"]
+    PubProfile["/:username (public profile)"]
     Notif["/notifications"]
     Map["/map"]
     GST["/gst-reports"]
@@ -598,7 +598,7 @@ flowchart LR
     BulkProd["/add-bulk-products"]
 
     Websites["/websites"]
-    Builder["/websites/:id"]
+    Builder["/websites/websiteId"]
 
     Root --- About
     Root --- Pricing
@@ -738,20 +738,20 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    A([User opens /feed]) --> B[useAuth → get userId]
-    B --> C[navigator.geolocation\nget lat / lon]
-    C --> D[Firestore: users/{uid}/following\nGet following IDs]
-    D --> E[Encode geohash, compute 9 neighbor cells]
-    E --> F[Firestore: location_index/{cell}\nGet nearby business IDs]
-    F --> G{nearbyIds.size == 0?}
-    G -- Yes --> H[Fallback: scan all businesses\nHaversine filter ≤ 10 km]
+    A(["User opens /feed"]) --> B["useAuth: get userId"]
+    B --> C["navigator.geolocation\nget lat / lon"]
+    C --> D["Firestore: users/uid/following\nGet following IDs"]
+    D --> E["Encode geohash, compute 9 neighbor cells"]
+    E --> F["Firestore: location_index/cell\nGet nearby business IDs"]
+    F --> G{"nearbyIds empty?"}
+    G -- Yes --> H["Fallback: scan all businesses\nHaversine filter <= 10 km"]
     G -- No --> I
-    H --> I[Union: following ∪ nearby − self]
-    I --> J[Batch fetch business metadata\nfrom Firestore in groups of 10]
-    J --> K[Batch fetch posts WHERE uid IN candidates\norderedBy createdAt DESC]
-    K --> L[Score each post:\n0.55×following + 0.35×location + 0.10×recency]
-    L --> M[Deduplicate, sort DESC, slice top N]
-    M --> N([Render PostCard list])
+    H --> I["Union: following + nearby - self"]
+    I --> J["Batch fetch business metadata\nfrom Firestore in groups of 10"]
+    J --> K["Batch fetch posts WHERE uid IN candidates\norderedBy createdAt DESC"]
+    K --> L["Score each post:\n0.55 x following + 0.35 x location + 0.10 x recency"]
+    L --> M["Deduplicate, sort DESC, slice top N"]
+    M --> N(["Render PostCard list"])
 ```
 
 #### Payment / Order Flow
@@ -784,13 +784,13 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    TRIG([Trigger: Order / Follow / System])
-    ADD[addNotification / sendNotificationToUser]
-    FS[(Firestore\nusers/uid/notifications/)]
-    SNAP[onSnapshot listener\nin notification page]
-    UI([Notification Bell + List])
-    WA[sendWhatsAppNotification\n→ /api/notification-whatsapp]
-    EM[sendEmailNotification\n→ /api/notification-email]
+    TRIG(["Trigger: Order / Follow / System"])
+    ADD["addNotification / sendNotificationToUser"]
+    FS[("Firestore\nusers/uid/notifications")]
+    SNAP["onSnapshot listener\nin notification page"]
+    UI(["Notification Bell + List"])
+    WA["sendWhatsAppNotification\nvia /api/notification-whatsapp"]
+    EM["sendEmailNotification\nvia /api/notification-email"]
 
     TRIG --> ADD
     ADD --> FS
