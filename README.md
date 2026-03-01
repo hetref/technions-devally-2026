@@ -5,7 +5,18 @@
 
 ---
 
-## 📑 Table of Contents
+## � Live Demo
+
+> [!IMPORTANT]
+> **The platform is live and deployed!** Click the link below to visit the production site:
+>
+> ### 🌐 [**tech-thikana.devally.in**](http://tech-thikana.devally.in/)
+>
+> [![Live Site](https://img.shields.io/badge/🌐%20Live%20Site-tech--thikana.devally.in-4A7C6F?style=for-the-badge&logo=vercel&logoColor=white)](http://tech-thikana.devally.in/)
+
+---
+
+## �📑 Table of Contents
 
 1. [Project Overview](#-project-overview)
 2. [Monorepo Structure](#-monorepo-structure)
