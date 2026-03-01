@@ -280,12 +280,12 @@ export async function recordPurchase(userId, productId, quantity, price, buyerId
       // Create an order in the buyer's document if buyerId is provided
       if (buyerId) {
         const orderRef = doc(collection(db, `users/${buyerId}/orders`));
-        transaction.set(orderRef, {
+        const orderData = {
           orderId: paymentId || orderRef.id,
           businessId: userId,
           businessName: businessName || productData.businessName || "Store",
           amount: price * quantity,
-          status: "completed",
+          status: "pending",
           timestamp: now,
           products: [
             {
@@ -296,6 +296,16 @@ export async function recordPurchase(userId, productId, quantity, price, buyerId
               quantity: quantity
             }
           ]
+        };
+        transaction.set(orderRef, orderData);
+
+        // Also create the order in the BUSINESS OWNER's orders subcollection
+        // so it shows up in the dashboard's Orders tab
+        const businessOrderRef = doc(collection(db, `users/${userId}/orders`));
+        transaction.set(businessOrderRef, {
+          ...orderData,
+          userId: buyerId,          // who placed the order
+          type: "received",         // distinguish from buyer-side orders
         });
       }
     });

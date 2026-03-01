@@ -9,10 +9,14 @@ Endpoints:
   GET /analytics/insights/{user_id}          ← spending insights
   GET /analytics/recommendations/{user_id}   ← expense recommendations
   GET /analytics/predictions/{user_id}       ← next-month spending forecast
+  GET /analytics/income-summary/{user_id}    ← income aggregated by month/category
+  GET /analytics/full-analysis/{user_id}     ← all 4 expense models in 1 Firestore read (fast)
 """
 
 import json
 from pathlib import Path
+from datetime import datetime
+from collections import defaultdict
 from fastapi import APIRouter, HTTPException, Query
 
 from models.anomaly_detector   import AnomalyDetector
@@ -27,22 +31,19 @@ _insights    = SpendingInsights()   # stateless — shared safely
 _recommender = ExpenseRecommender() # stateless — shared safely
 _predictor   = SpendingPredictor()  # stateless — shared safely
 
-# ── Data loading helper (mock only) ──────────────────────────────────────────
+# ── Data loading helper ───────────────────────────────────────────────────────
 
 _MOCK_DB_PATH = Path(__file__).parent.parent / "data" / "mock_db.json"
 _mock_cache: dict | None = None
 
 def _get_transactions(user_id: str) -> list[dict]:
     """
-    Returns transactions for a user.
-
-    USE_MOCK=True  → reads from data/mock_db.json  (local dev / tests)
-    USE_MOCK=False → reads from Firestore           (production)
-
+    Returns expense transactions for a user.
+    USE_MOCK=True  → reads from data/mock_db.json
+    USE_MOCK=False → reads from Firestore
     Firestore path: transactions/{user_id}/user_transactions/{doc_id}
     """
     from config import USE_MOCK
-
     if USE_MOCK:
         global _mock_cache
         if _mock_cache is None:
@@ -51,11 +52,50 @@ def _get_transactions(user_id: str) -> list[dict]:
         all_txns = _mock_cache.get("transactions", [])
         return [t for t in all_txns if t.get("user_id") == user_id]
 
-    # ── Live Firestore ────────────────────────────────────────────────────────
     from db.firebase import FirebaseDB
     db = FirebaseDB()
     return db.get_user_transactions(user_id)
 
+
+def _get_income(user_id: str) -> list[dict]:
+    """
+    Returns income entries for a user.
+    USE_MOCK=True  → returns empty list (mock has no income data)
+    USE_MOCK=False → reads from Firestore
+    Firestore path: transactions/{user_id}/user_income/{doc_id}
+    """
+    from config import USE_MOCK
+    if USE_MOCK:
+        return []
+
+    from db.firebase import FirebaseDB
+    db = FirebaseDB()
+    return db.get_user_income(user_id)
+
+
+def _compute_monthly_income(income_entries: list[dict]) -> float:
+    """
+    Compute the average monthly income from income entries.
+    Falls back to 0 if no entries exist.
+    """
+    if not income_entries:
+        return 0.0
+
+    monthly_totals: dict[str, float] = defaultdict(float)
+    for entry in income_entries:
+        ts = entry.get("timestamp", "")
+        amt = float(entry.get("amount", 0) or 0)
+        try:
+            dt = datetime.fromisoformat(str(ts).replace(" ", "T").rstrip("Z"))
+            key = f"{dt.year}-{dt.month:02d}"
+        except Exception:
+            key = "unknown"
+        monthly_totals[key] += amt
+
+    valid = {k: v for k, v in monthly_totals.items() if k != "unknown"}
+    if not valid:
+        return 0.0
+    return round(sum(valid.values()) / len(valid), 2)
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -120,24 +160,21 @@ def get_recommendations(
     user_id: str,
     monthly_income: float = Query(
         0,
-        description="Average monthly income in Rs. (0 = unknown, uses total spend as reference)",
+        description="Average monthly income in Rs. (0 = auto-calculated from Firestore income)",
         ge=0,
     ),
 ):
     """
     Generate budget recommendations and saving strategies.
-
-    Returns 4 sections:
-      - budget_suggestions   — categories exceeding 20% of income with saving targets
-      - timing_optimization  — best day of week to make purchases per category
-      - saving_opportunities — categories that are overspent or trending up
-      - category_tips        — severity-scaled tips for any overspent category
-
-    Pass ?monthly_income=50000 for income-relative recommendations.
-    Without income, percentages are relative to total monthly spend.
+    If monthly_income is 0 (default), it is auto-calculated from the user's
+    income entries in Firestore so recommendations are always income-relative.
     """
     try:
         transactions = _get_transactions(user_id)
+        # Auto-calculate income from Firestore if not provided
+        if monthly_income == 0:
+            income_entries = _get_income(user_id)
+            monthly_income = _compute_monthly_income(income_entries)
         return _recommender.recommend(transactions, user_id, monthly_income)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -148,17 +185,171 @@ def get_predictions(user_id: str):
     """
     Predict next month's spending per category using weighted moving average
     with trend adjustment.
-
-    Each prediction includes:
-      - predicted:    expected total spend for the category next month
-      - lower_bound:  predicted - 1 std dev (68% likely to be above this)
-      - upper_bound:  predicted + 1 std dev (68% likely to be below this)
-      - confidence:   'high' (3+ stable months) | 'medium' | 'low'
-      - trend:        'increasing' | 'decreasing' | 'stable'
-      - trend_pct:    average month-over-month % change
     """
     try:
         transactions = _get_transactions(user_id)
         return _predictor.predict(transactions, user_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/income-summary/{user_id}")
+def get_income_summary(user_id: str):
+    """
+    Aggregate income data for the user.
+
+    Returns:
+      - total_income:       float — all-time total
+      - monthly_average:    float — average income per month
+      - monthly_breakdown:  list  — [{month, total, count}] sorted ascending
+      - category_breakdown: list  — [{category, total, count}] sorted by total desc
+      - date_range:         {from, to}
+      - total_entries:      int
+    """
+    try:
+        income_entries = _get_income(user_id)
+
+        if not income_entries:
+            return {
+                "user_id": user_id,
+                "total_income": 0,
+                "monthly_average": 0,
+                "monthly_breakdown": [],
+                "category_breakdown": [],
+                "date_range": {"from": None, "to": None},
+                "total_entries": 0,
+            }
+
+        monthly: dict[str, dict] = defaultdict(lambda: {"total": 0.0, "count": 0})
+        categories: dict[str, dict] = defaultdict(lambda: {"total": 0.0, "count": 0})
+        timestamps = []
+
+        for entry in income_entries:
+            amt = float(entry.get("amount", 0) or 0)
+            cat = entry.get("category", "Other") or "Other"
+            ts_raw = entry.get("timestamp", "")
+
+            try:
+                dt = datetime.fromisoformat(str(ts_raw).replace(" ", "T").rstrip("Z"))
+                month_key = f"{dt.year}-{dt.month:02d}"
+                timestamps.append(dt)
+            except Exception:
+                month_key = "Unknown"
+
+            monthly[month_key]["total"] += amt
+            monthly[month_key]["count"] += 1
+            categories[cat]["total"] += amt
+            categories[cat]["count"] += 1
+
+        total_income = sum(v["total"] for v in monthly.values())
+        valid_months = {k: v for k, v in monthly.items() if k != "Unknown"}
+        monthly_average = round(
+            sum(v["total"] for v in valid_months.values()) / max(1, len(valid_months)), 2
+        )
+
+        monthly_breakdown = sorted(
+            [{"month": k, "total": round(v["total"], 2), "count": v["count"]} for k, v in monthly.items()],
+            key=lambda x: x["month"],
+        )
+        category_breakdown = sorted(
+            [{"category": k, "total": round(v["total"], 2), "count": v["count"]} for k, v in categories.items()],
+            key=lambda x: -x["total"],
+        )
+
+        return {
+            "user_id": user_id,
+            "total_income": round(total_income, 2),
+            "monthly_average": monthly_average,
+            "monthly_breakdown": monthly_breakdown,
+            "category_breakdown": category_breakdown,
+            "date_range": {
+                "from": str(min(timestamps).date()) if timestamps else None,
+                "to":   str(max(timestamps).date()) if timestamps else None,
+            },
+            "total_entries": len(income_entries),
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/full-analysis/{user_id}")
+def get_full_analysis(user_id: str):
+    """
+    Run ALL 4 expense analytics models with a SINGLE Firestore read.
+
+    Returns a merged response containing:
+      - anomalies        (AnomalyDetector)
+      - insights         (SpendingInsights)
+      - recommendations  (ExpenseRecommender — auto income-relative)
+      - predictions      (SpendingPredictor)
+      - income_summary   (from user_income subcollection)
+
+    Use this endpoint instead of calling the 4 individual endpoints —
+    it performs only 2 Firestore reads total (expenses + income) regardless
+    of how many models run.
+    """
+    try:
+        # ── 2 Firestore reads total ───────────────────────────────────────────
+        transactions   = _get_transactions(user_id)
+        income_entries = _get_income(user_id)
+        monthly_income = _compute_monthly_income(income_entries)
+
+        # ── Run all 4 models in memory (zero additional DB reads) ─────────────
+        anomaly_result  = _detector.detect(transactions, user_id)
+        insights_result = _insights.analyze(transactions, user_id)
+        rec_result      = _recommender.recommend(transactions, user_id, monthly_income)
+        pred_result     = _predictor.predict(transactions, user_id)
+
+        # ── Build income summary inline ───────────────────────────────────────
+        i_monthly: dict    = defaultdict(lambda: {"total": 0.0, "count": 0})
+        i_categories: dict = defaultdict(lambda: {"total": 0.0, "count": 0})
+        i_timestamps       = []
+        for entry in income_entries:
+            amt    = float(entry.get("amount", 0) or 0)
+            cat    = entry.get("category", "Other") or "Other"
+            ts_raw = entry.get("timestamp", "")
+            try:
+                dt  = datetime.fromisoformat(str(ts_raw).replace(" ", "T").rstrip("Z"))
+                key = f"{dt.year}-{dt.month:02d}"
+                i_timestamps.append(dt)
+            except Exception:
+                key = "Unknown"
+            i_monthly[key]["total"]    += amt
+            i_monthly[key]["count"]    += 1
+            i_categories[cat]["total"] += amt
+            i_categories[cat]["count"] += 1
+
+        i_total = round(sum(v["total"] for v in i_monthly.values()), 2)
+        i_valid = {k: v for k, v in i_monthly.items() if k != "Unknown"}
+        income_summary = {
+            "total_income":    i_total,
+            "monthly_average": round(
+                sum(v["total"] for v in i_valid.values()) / max(1, len(i_valid)), 2
+            ),
+            "monthly_breakdown": sorted(
+                [{"month": k, "total": round(v["total"], 2), "count": v["count"]} for k, v in i_monthly.items()],
+                key=lambda x: x["month"],
+            ),
+            "category_breakdown": sorted(
+                [{"category": k, "total": round(v["total"], 2), "count": v["count"]} for k, v in i_categories.items()],
+                key=lambda x: -x["total"],
+            ),
+            "date_range": {
+                "from": str(min(i_timestamps).date()) if i_timestamps else None,
+                "to":   str(max(i_timestamps).date()) if i_timestamps else None,
+            },
+            "total_entries": len(income_entries),
+        }
+
+        return {
+            "user_id":         user_id,
+            "anomalies":       anomaly_result,
+            "insights":        insights_result,
+            "recommendations": rec_result,
+            "predictions":     pred_result,
+            "income_summary":  income_summary,
+        }
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
