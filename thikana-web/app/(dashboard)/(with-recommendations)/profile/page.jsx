@@ -12,6 +12,8 @@ import dynamic from "next/dynamic";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import {
     Dialog,
     DialogContent,
@@ -99,8 +101,6 @@ import ShowServicesTabContent from "@/components/profile/ShowServicesTabContent"
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useReactToPrint } from "react-to-print";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 import { Textarea } from "@/components/ui/textarea";
 import "leaflet/dist/leaflet.css";
 import ShowPropertiesTabContent from "@/components/profile/ShowPropertiesTabContent";
@@ -700,80 +700,33 @@ export default function Profile() {
         [router]
     );
 
-    // Fixed: Handle printing functionality with better error handling
+    // Fixed: Handle printing functionality using react-to-print v3 API (contentRef instead of content)
     const handlePrint = useReactToPrint({
-        content: () => billRef.current,
+        contentRef: billRef,
         documentTitle: `Invoice_${selectedOrder?.orderId || "order"}`,
-        onBeforeGetContent: () => {
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    resolve();
-                }, 200);
-            });
-        },
         onAfterPrint: () => {
-            toast.success("Invoice ready for printing/saving");
+            toast.success("Invoice successfully processed.");
         },
-        removeAfterPrint: false,
-        print: async (printIframe) => {
-            try {
-                const document = printIframe.contentDocument;
-                if (document) {
-                    const html = document.getElementsByTagName("html")[0];
-
-                    // Try to force PDF to be an option
-                    document.body.style.width = "210mm";
-                    document.body.style.height = "297mm"; // A4 dimensions
-
-                    html.style.width = "210mm";
-                    html.style.height = "297mm";
-
-                    setTimeout(() => {
-                        window.print();
-                    }, 500);
-                }
-            } catch (error) {
-                console.error("Error printing:", error);
-                toast.error("Failed to print invoice");
-            }
-        },
+        pageStyle: `
+            @page { size: auto; margin: 20mm; }
+            @media print { body { -webkit-print-color-adjust: exact; } }
+        `
     });
 
-    // Fixed: Function to download PDF directly with better error handling
-    const handleDownloadPDF = useCallback(async () => {
-        if (!billRef.current) return;
-
-        try {
-            toast.loading("Generating PDF...");
-
-            const content = billRef.current;
-            const canvas = await html2canvas(content, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-            });
-
-            const imgData = canvas.toDataURL("image/png");
-            const pdf = new jsPDF({
-                orientation: "portrait",
-                unit: "mm",
-                format: "a4",
-            });
-
-            const imgWidth = 210; // A4 width in mm
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-            pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-            pdf.save(`Invoice_${selectedOrder?.orderId || "order"}.pdf`);
-
-            toast.dismiss();
-            toast.success("PDF downloaded successfully");
-        } catch (error) {
-            console.error("Error generating PDF:", error);
-            toast.dismiss();
-            toast.error("Failed to generate PDF");
+    // Fixed: Function to download PDF using the native browser engine (supports modern Tailwind colors like oklch/lab)
+    const handleDownloadPDF = useCallback(() => {
+        if (!billRef.current) {
+            toast.error("Receipt not found. Please try again.");
+            return;
         }
-    }, [selectedOrder?.orderId]);
+
+        toast.loading("Preparing PDF layout...");
+        setTimeout(() => {
+            toast.dismiss();
+            toast.success("Please select 'Save as PDF' in the print dialog popup.");
+            handlePrint();
+        }, 500);
+    }, [handlePrint]);
 
     // Fixed: Function to handle bill generation with validation
     const handleGenerateBill = useCallback((order) => {

@@ -177,7 +177,7 @@ export async function deleteProduct(userId, productId, imageUrl) {
   }
 }
 
-export async function recordPurchase(userId, productId, quantity, price) {
+export async function recordPurchase(userId, productId, quantity, price, buyerId = null, paymentId = null, businessName = null) {
   try {
     await runTransaction(db, async (transaction) => {
       const productRef = doc(db, `users/${userId}/products`, productId);
@@ -276,6 +276,28 @@ export async function recordPurchase(userId, productId, quantity, price) {
         },
         { merge: true }
       );
+
+      // Create an order in the buyer's document if buyerId is provided
+      if (buyerId) {
+        const orderRef = doc(collection(db, `users/${buyerId}/orders`));
+        transaction.set(orderRef, {
+          orderId: paymentId || orderRef.id,
+          businessId: userId,
+          businessName: businessName || productData.businessName || "Store",
+          amount: price * quantity,
+          status: "completed",
+          timestamp: now,
+          products: [
+            {
+              productId: productId,
+              productName: productData.title || productData.name || "Product",
+              imageUrl: productData.imageUrl || null,
+              amount: price,
+              quantity: quantity
+            }
+          ]
+        });
+      }
     });
   } catch (error) {
     console.error("Error recording purchase:", error);

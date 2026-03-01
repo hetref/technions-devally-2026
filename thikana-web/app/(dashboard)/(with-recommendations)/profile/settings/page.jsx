@@ -94,6 +94,7 @@ export default function SettingsPage() {
       )}
 
       <Tabs
+        orientation="vertical"
         value={activeTab}
         onValueChange={handleTabChange}
         className="flex flex-col md:flex-row gap-8 mt-6"

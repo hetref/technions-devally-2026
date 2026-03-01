@@ -50,7 +50,7 @@ const WithRecommendationsLayout = ({ children }) => {
                             <NearbyBusinessMap
                                 height="240px"
                                 width="100%"
-                                cardHeight="340px"
+                                cardHeight="400px"
                             />
                         </div>
                     </aside>
