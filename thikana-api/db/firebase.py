@@ -282,3 +282,43 @@ class FirebaseDB:
             f"transactions for user '{user_id}'"
         )
         return transactions
+
+    # ── get_user_income ───────────────────────────────────────────────────────
+
+    def get_user_income(self, user_id: str) -> list[dict]:
+        """
+        Fetch all income entries for a user from Firestore.
+
+        Firestore path:
+            transactions/{user_id}/user_income/{doc_id}
+
+        Returns a plain list[dict] with timestamps as ISO-8601 strings.
+        """
+        ref = (
+            _db.collection("transactions")
+            .document(str(user_id).strip())
+            .collection("user_income")
+        )
+
+        incomes = []
+        for doc in ref.stream():
+            data = doc.to_dict() or {}
+            data["id"]      = doc.id
+            data["user_id"] = str(user_id).strip()
+
+            ts = data.get("timestamp")
+            if hasattr(ts, "isoformat"):
+                data["timestamp"] = ts.isoformat()
+            elif hasattr(ts, "_seconds"):
+                from datetime import datetime, timezone
+                data["timestamp"] = datetime.fromtimestamp(
+                    ts._seconds, tz=timezone.utc
+                ).isoformat()
+
+            incomes.append(data)
+
+        logger.info(
+            f"get_user_income: fetched {len(incomes)} "
+            f"income entries for user '{user_id}'"
+        )
+        return incomes

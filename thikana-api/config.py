@@ -7,7 +7,7 @@ Nothing else in the codebase needs to change for either.
 """
 
 # ── Data source ───────────────────────────────────────────────────────────────
-USE_MOCK= True  # True → mock JSON, False → live Firebase
+USE_MOCK = False  # True → mock JSON, False → live Firebase
 
 # ── Firebase ──────────────────────────────────────────────────────────────────
 # serviceAccountKey.json lives one folder up (in the Recommendation model/ root)
