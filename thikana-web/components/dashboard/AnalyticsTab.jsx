@@ -47,13 +47,27 @@ const COLORS = [
   "#8b5cf6",
   "#ec4899",
 ];
+const MONTH_NAMES = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
 export default function AnalyticsTab() {
   const [loading, setLoading] = useState(true);
   const [analyticsData, setAnalyticsData] = useState(null);
-  const [categoryData, setCategoryData] = useState([]); // expense categories
-  const [incomeCategoryData, setIncomeCategoryData] = useState([]); // income categories
-  const [monthlyComparisonData, setMonthlyComparisonData] = useState([]); // income vs expense by month
+  const [categoryData, setCategoryData] = useState([]);
+  const [incomeCategoryData, setIncomeCategoryData] = useState([]);
+  const [monthlyComparisonData, setMonthlyComparisonData] = useState([]);
   const [anomalyData, setAnomalyData] = useState([]);
   const [predictedData, setPredictedData] = useState([]);
   const [generatingPdf, setGeneratingPdf] = useState(false);
@@ -67,210 +81,118 @@ export default function AnalyticsTab() {
           setLoading(false);
           return;
         }
+
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        // Single endpoint — API does 2 Firestore reads total and runs all 4 models
+        const res = await fetch(
+          `${apiUrl}/analytics/full-analysis/${user.uid}`,
+        );
+        if (!res.ok) throw new Error(`API returned ${res.status}`);
 
-        // Call all 5 analytics endpoints in parallel
-        const [
-          anomalyRes,
-          insightsRes,
-          recommendationsRes,
-          predictionsRes,
-          incomeRes,
-        ] = await Promise.allSettled([
-          fetch(`${apiUrl}/analytics/anomalies/${user.uid}`),
-          fetch(`${apiUrl}/analytics/insights/${user.uid}`),
-          fetch(`${apiUrl}/analytics/recommendations/${user.uid}`),
-          fetch(`${apiUrl}/analytics/predictions/${user.uid}`),
-          fetch(`${apiUrl}/analytics/income-summary/${user.uid}`),
-        ]);
+        const data = await res.json();
+        setAnalyticsData(data);
 
         let realDataFound = false;
 
-        // ── Process anomalies ────────────────────────────────────────────────
-        if (anomalyRes.status === "fulfilled" && anomalyRes.value.ok) {
-          const result = await anomalyRes.value.json();
-          if (result.anomalies?.length > 0) {
-            setAnomalyData(
-              result.anomalies.map((a) => ({
-                date: a.timestamp
-                  ? a.timestamp.split("T")[0]
-                  : a.date || "Unknown",
-                amount: a.amount || 0,
-                isAnomaly: true,
-                reason: a.reason || a.methods?.join(", ") || "Unusual spending",
-                severity: a.severity || "medium",
-              })),
-            );
-            realDataFound = true;
-          }
-          setAnalyticsData((prev) => ({ ...prev, anomalies: result }));
-        }
-
-        // ── Process insights (expense patterns & categories) ──────────────────
-        let expenseMonthlyMap = {}; // { "2025-01": total }
-        if (insightsRes.status === "fulfilled" && insightsRes.value.ok) {
-          const result = await insightsRes.value.json();
-
-          if (result.category_analysis) {
-            const catData = Object.entries(result.category_analysis)
-              .map(([name, details]) => ({
-                name,
-                value: details.total_spent || details.total || 0,
-              }))
-              .filter((c) => c.value > 0);
-            if (catData.length > 0) {
-              setCategoryData(catData);
-              realDataFound = true;
-            }
-          }
-
-          // Build monthly expense map from spending_patterns
-          if (result.spending_patterns?.by_day) {
-            // by_day is day-of-week, not what we want for monthly chart
-          }
-          // Use total_spent + date_range to estimate — actual monthly from predictions later
-          setAnalyticsData((prev) => ({ ...prev, insights: result }));
-          if (result.recommendations) {
-            setAnalyticsData((prev) => ({
-              ...prev,
-              insights_recommendations: result.recommendations,
-            }));
-          }
-        }
-
-        // ── Process recommendations ───────────────────────────────────────────
-        if (
-          recommendationsRes.status === "fulfilled" &&
-          recommendationsRes.value.ok
-        ) {
-          const result = await recommendationsRes.value.json();
-          setAnalyticsData((prev) => ({ ...prev, recommendations: result }));
-          if (result.recommendations?.budget_suggestions?.length > 0)
-            realDataFound = true;
-        }
-
-        // ── Process predictions ───────────────────────────────────────────────
-        if (predictionsRes.status === "fulfilled" && predictionsRes.value.ok) {
-          const result = await predictionsRes.value.json();
-          setAnalyticsData((prev) => ({ ...prev, predictions: result }));
-
-          if (
-            result.predictions &&
-            Object.keys(result.predictions).length > 0
-          ) {
-            const months = [
-              "Jan",
-              "Feb",
-              "Mar",
-              "Apr",
-              "May",
-              "Jun",
-              "Jul",
-              "Aug",
-              "Sep",
-              "Oct",
-              "Nov",
-              "Dec",
-            ];
-            const currentMonthIndex = new Date().getMonth();
-            const totalPredicted = Object.values(result.predictions).reduce(
-              (sum, cat) => sum + (cat.predicted || 0),
-              0,
-            );
-            setPredictedData([
-              {
-                month: months[currentMonthIndex],
-                actual: totalPredicted * 0.95,
-                predicted: totalPredicted * 0.95,
-              },
-              ...Array.from({ length: 5 }, (_, i) => ({
-                month: months[(currentMonthIndex + i + 1) % 12],
-                actual: null,
-                predicted: Math.round(totalPredicted * (1 + 0.03 * (i + 1))),
-              })),
-            ]);
-            realDataFound = true;
-          }
-        }
-
-        // ── Process income summary ────────────────────────────────────────────
-        let incomeMonthlyMap = {}; // { "2025-01": total }
-        if (incomeRes.status === "fulfilled" && incomeRes.value.ok) {
-          const result = await incomeRes.value.json();
-          setAnalyticsData((prev) => ({ ...prev, income: result }));
-
-          if (result.category_breakdown?.length > 0) {
-            setIncomeCategoryData(
-              result.category_breakdown.map((c) => ({
-                name: c.category,
-                value: c.total,
-              })),
-            );
-            realDataFound = true;
-          }
-
-          if (result.monthly_breakdown?.length > 0) {
-            result.monthly_breakdown.forEach((m) => {
-              incomeMonthlyMap[m.month] = m.total;
-            });
-            realDataFound = true;
-          }
-        }
-
-        // ── Build monthly income vs expense comparison ────────────────────────
-        // Use insights category_analysis to get per-month expense data
-        // OR fall back to predictions historical data if available
-        const insightsResult = analyticsData?.insights;
-        // Build expense monthly map from anomaly timestamps + insights
-        // Best approach: use spending_patterns from insights or predictions history
-        const allMonths = new Set([...Object.keys(incomeMonthlyMap)]);
-
-        // If predictions has historical data, use it
-        const predictResult = analyticsData?.predictions;
-        if (predictResult?.monthly_history) {
-          Object.entries(predictResult.monthly_history).forEach(
-            ([cat, months]) => {
-              Object.entries(months).forEach(([month, amt]) => {
-                expenseMonthlyMap[month] =
-                  (expenseMonthlyMap[month] || 0) + amt;
-                allMonths.add(month);
-              });
-            },
+        // ── Anomalies ────────────────────────────────────────────────────────
+        const anomalies = data.anomalies?.anomalies ?? [];
+        if (anomalies.length > 0) {
+          setAnomalyData(
+            anomalies.map((a) => ({
+              date: a.timestamp
+                ? a.timestamp.split("T")[0]
+                : a.date || "Unknown",
+              amount: a.amount || 0,
+              isAnomaly: true,
+              reason:
+                a.reason || (a.flags ?? []).join(", ") || "Unusual spending",
+              severity: a.severity || "medium",
+            })),
           );
+          realDataFound = true;
         }
 
+        // ── Expense category pie ──────────────────────────────────────────────
+        const catData = Object.entries(data.insights?.category_analysis ?? {})
+          .map(([name, d]) => ({ name, value: d.total_spent || d.total || 0 }))
+          .filter((c) => c.value > 0);
+        if (catData.length > 0) {
+          setCategoryData(catData);
+          realDataFound = true;
+        }
+
+        // ── Spending predictions ──────────────────────────────────────────────
+        const preds = data.predictions?.predictions;
+        if (preds && Object.keys(preds).length > 0) {
+          const curMonth = new Date().getMonth();
+          const totalPred = Object.values(preds).reduce(
+            (s, c) => s + (c.predicted || 0),
+            0,
+          );
+          setPredictedData([
+            {
+              month: MONTH_NAMES[curMonth],
+              actual: Math.round(totalPred),
+              predicted: Math.round(totalPred),
+            },
+            ...Array.from({ length: 5 }, (_, i) => ({
+              month: MONTH_NAMES[(curMonth + i + 1) % 12],
+              actual: null,
+              predicted: Math.round(totalPred * (1 + 0.03 * (i + 1))),
+            })),
+          ]);
+          realDataFound = true;
+        }
+
+        // ── Income summary ────────────────────────────────────────────────────
+        const income = data.income_summary ?? {};
+        if (income.category_breakdown?.length > 0) {
+          setIncomeCategoryData(
+            income.category_breakdown.map((c) => ({
+              name: c.category,
+              value: c.total,
+            })),
+          );
+          realDataFound = true;
+        }
+
+        // ── Monthly income vs expense comparison ──────────────────────────────
+        const incomeMap = {};
+        const expenseMap = {};
+        (income.monthly_breakdown ?? []).forEach((m) => {
+          incomeMap[m.month] = m.total;
+        });
+        Object.values(data.predictions?.monthly_history ?? {}).forEach(
+          (catHistory) => {
+            Object.entries(catHistory).forEach(([month, amt]) => {
+              expenseMap[month] = (expenseMap[month] || 0) + amt;
+            });
+          },
+        );
+        const allMonths = new Set([
+          ...Object.keys(incomeMap),
+          ...Object.keys(expenseMap),
+        ]);
         if (allMonths.size > 0) {
           const comparison = Array.from(allMonths)
             .sort()
             .map((month) => {
               const [, m] = month.split("-");
-              const monthNames = [
-                "Jan",
-                "Feb",
-                "Mar",
-                "Apr",
-                "May",
-                "Jun",
-                "Jul",
-                "Aug",
-                "Sep",
-                "Oct",
-                "Nov",
-                "Dec",
-              ];
               return {
-                name: monthNames[parseInt(m) - 1] || month,
-                income: Math.round(incomeMonthlyMap[month] || 0),
-                expense: Math.round(expenseMonthlyMap[month] || 0),
+                name: MONTH_NAMES[parseInt(m) - 1] || month,
+                income: Math.round(incomeMap[month] || 0),
+                expense: Math.round(expenseMap[month] || 0),
               };
             });
           if (comparison.length > 0) setMonthlyComparisonData(comparison);
         }
 
+        if (income.total_entries > 0 || catData.length > 0)
+          realDataFound = true;
         setHasData(realDataFound);
       } catch (error) {
-        console.error("Error fetching analytics data:", error);
+        console.error("Analytics fetch error:", error);
         toast.error("Failed to load analytics data");
       } finally {
         setLoading(false);
@@ -289,37 +211,29 @@ export default function AnalyticsTab() {
       doc.text("Analytics Report — Thikana Portal", 14, 15);
       doc.setFontSize(10);
       doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
-
       doc.setFontSize(14);
       doc.text("Expense Categories", 14, 32);
-      const catRows = categoryData.map((c) => [
-        c.name,
-        `₹${c.value?.toFixed(0)}`,
-      ]);
       autoTable(doc, {
         startY: 37,
         head: [["Category", "Amount"]],
-        body: catRows,
+        body: categoryData.map((c) => [c.name, `₹${c.value?.toFixed(0)}`]),
       });
-
-      const afterCat = doc.lastAutoTable.finalY + 8;
+      const y2 = doc.lastAutoTable.finalY + 8;
       doc.setFontSize(14);
-      doc.text("Income Categories", 14, afterCat);
-      const incomeRows = incomeCategoryData.map((c) => [
-        c.name,
-        `₹${c.value?.toFixed(0)}`,
-      ]);
+      doc.text("Income Categories", 14, y2);
       autoTable(doc, {
-        startY: afterCat + 5,
+        startY: y2 + 5,
         head: [["Category", "Amount"]],
-        body: incomeRows,
+        body: incomeCategoryData.map((c) => [
+          c.name,
+          `₹${c.value?.toFixed(0)}`,
+        ]),
       });
-
       doc.save("analytics-report.pdf");
       toast.success("Report downloaded!");
     } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF report");
+      console.error("PDF error:", error);
+      toast.error("Failed to generate PDF");
     } finally {
       setGeneratingPdf(false);
     }
@@ -332,15 +246,14 @@ export default function AnalyticsTab() {
       </div>
     );
 
-  const income = analyticsData?.income;
+  const income = analyticsData?.income_summary;
   const totalIncome = income?.total_income || 0;
   const monthlyAvgIncome = income?.monthly_average || 0;
-  const insights = analyticsData?.insights;
-  const totalExpense = insights?.total_spent || 0;
+  const totalExpense = analyticsData?.insights?.total_spent || 0;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* ── Header ── */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-2xl font-bold">Analytics</h2>
@@ -354,7 +267,7 @@ export default function AnalyticsTab() {
               variant="outline"
               className="px-3 py-1 text-amber-600 border-amber-300"
             >
-              No data yet — add expenses & income first
+              No data yet — add expenses &amp; income first
             </Badge>
           )}
           <Button
@@ -368,7 +281,7 @@ export default function AnalyticsTab() {
         </div>
       </div>
 
-      {/* KPI Summary Cards */}
+      {/* ── KPI Cards ── */}
       {hasData && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
@@ -422,9 +335,8 @@ export default function AnalyticsTab() {
         </div>
       )}
 
-      {/* Charts Row */}
+      {/* ── Main Charts ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Income vs Expense Monthly Comparison */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -459,12 +371,11 @@ export default function AnalyticsTab() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <EmptyChart message="Income data will appear here once you add income entries" />
+              <EmptyChart message="Add income entries to see monthly comparison" />
             )}
           </CardContent>
         </Card>
 
-        {/* Expense by Category */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -507,7 +418,7 @@ export default function AnalyticsTab() {
         </Card>
       </div>
 
-      {/* Income Category Chart */}
+      {/* ── Income Category Bar ── */}
       {incomeCategoryData.length > 0 && (
         <Card>
           <CardHeader>
@@ -545,7 +456,7 @@ export default function AnalyticsTab() {
         </Card>
       )}
 
-      {/* Detailed Sub-tabs */}
+      {/* ── Sub-tabs ── */}
       <Tabs defaultValue="anomalies">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger
@@ -571,7 +482,7 @@ export default function AnalyticsTab() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Anomaly Detection */}
+        {/* Anomalies */}
         <TabsContent value="anomalies" className="space-y-4">
           <Card>
             <CardHeader>
@@ -593,7 +504,6 @@ export default function AnalyticsTab() {
                         <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                         <YAxis tick={{ fontSize: 12 }} />
                         <Tooltip
-                          formatter={(v) => [`₹${v}`, "Amount"]}
                           content={({ active, payload }) =>
                             active && payload?.length ? (
                               <div className="bg-white border rounded-lg p-2 shadow text-xs">
@@ -631,11 +541,15 @@ export default function AnalyticsTab() {
                         <h4 className="font-medium text-amber-800">
                           {analyticsData?.anomalies?.anomaly_count ||
                             anomalyData.length}{" "}
-                          Anomaly Detected
+                          Unusual Transaction
+                          {(analyticsData?.anomalies?.anomaly_count ||
+                            anomalyData.length) !== 1
+                            ? "s"
+                            : ""}{" "}
+                          Detected
                         </h4>
                         <p className="text-sm text-amber-700 mt-1">
-                          Unusual transactions found in your spending history.
-                          Review red bars above.
+                          Review the red bars above for unusual spending.
                         </p>
                       </div>
                     </div>
@@ -707,9 +621,9 @@ export default function AnalyticsTab() {
                         dataKey="predicted"
                         stroke="#6366f1"
                         strokeWidth={2}
-                        strokeDasharray="5 5"
                         name="Predicted"
                         dot={{ r: 4 }}
+                        strokeDasharray="5 5"
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -725,7 +639,7 @@ export default function AnalyticsTab() {
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {Object.entries(analyticsData.predictions.predictions)
                     .slice(0, 6)
-                    .map(([cat, data]) => (
+                    .map(([cat, d]) => (
                       <div
                         key={cat}
                         className="border rounded-lg p-3 flex justify-between items-center"
@@ -733,14 +647,14 @@ export default function AnalyticsTab() {
                         <div>
                           <p className="font-medium text-sm">{cat}</p>
                           <p className="text-xs text-muted-foreground capitalize">
-                            {data.trend || "stable"} ·{" "}
-                            {data.confidence || "low"} confidence
+                            {d.trend || "stable"} · {d.confidence || "low"}{" "}
+                            confidence
                           </p>
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-sm text-indigo-600">
                             ₹
-                            {Math.round(data.predicted || 0).toLocaleString(
+                            {Math.round(d.predicted || 0).toLocaleString(
                               "en-IN",
                             )}
                           </p>
@@ -762,8 +676,8 @@ export default function AnalyticsTab() {
             <CardHeader>
               <CardTitle>AI Recommendations</CardTitle>
               <CardDescription>
-                Personalized savings suggestions based on your actual income (₹
-                {monthlyAvgIncome.toLocaleString("en-IN")}/mo avg) and expenses
+                Based on your actual income (₹
+                {monthlyAvgIncome.toLocaleString("en-IN")}/mo avg) and spending
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -815,7 +729,8 @@ export default function AnalyticsTab() {
                             <div className="flex items-start gap-2">
                               <Lightbulb className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
                               <p className="text-sm text-gray-700">
-                                {tip.tip || tip}
+                                {tip.tip ||
+                                  (typeof tip === "string" ? tip : "")}
                               </p>
                             </div>
                           </div>

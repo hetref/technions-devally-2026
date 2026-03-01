@@ -126,7 +126,7 @@ const detectAnomalies = (incomes) => {
         });
 
         const topCategory = Object.entries(categoryCounts).sort(
-          (a, b) => b[1] - a[1]
+          (a, b) => b[1] - a[1],
         )[0][0];
 
         reason = `Multiple ${topCategory} transactions on same day`;
@@ -231,7 +231,7 @@ export default function IncomeAnalyticsTab() {
           db,
           "transactions",
           user.uid,
-          "user_income"
+          "user_income",
         );
         const q = query(incomesRef, orderBy("timestamp", "desc"));
         const querySnapshot = await getDocs(q);
@@ -250,7 +250,7 @@ export default function IncomeAnalyticsTab() {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         const response = await fetch(
-          `${apiUrl}/analysis/full-analysis-income/${user.uid}`
+          `${apiUrl}/analytics/income-summary/${user.uid}`,
         );
 
         if (response.ok) {
@@ -260,61 +260,24 @@ export default function IncomeAnalyticsTab() {
           // Process real analytics data if available
           if (data && !data.error) {
             try {
-              // Process category data for pie chart
-              const categories = data.recommendations?.category_analysis || {};
-              const categoryChartData = Object.entries(categories).map(
-                ([name, details]) => ({
-                  name,
-                  value: details.total_income || 0,
-                })
+              // Process category data for pie chart — [{category, total, count}]
+              const categoryChartData = (data.category_breakdown || []).map(
+                (c) => ({ name: c.category, value: c.total || 0 }),
               );
 
-              // Process monthly data from income patterns
-              const incomePatterns =
-                data.recommendations?.income_patterns?.by_month || {};
-              const monthlyChartData = Object.entries(incomePatterns).map(
-                ([month, details]) => ({
-                  name: month,
-                  amount: details.total_income || 0,
-                })
+              // Process monthly data — [{month, total, count}] e.g. "2024-06"
+              const monthlyChartData = (data.monthly_breakdown || []).map(
+                (m) => ({
+                  name: m.month,
+                  amount: m.total || 0,
+                }),
               );
 
-              // Process anomaly data
-              const anomalies = data.income_analysis?.anomalies || [];
-              const formattedAnomalies = anomalies.map((anomaly) => {
-                const date = anomaly.timestamp
-                  ? new Date(anomaly.timestamp).toISOString().split("T")[0]
-                  : "";
-                return {
-                  date,
-                  amount: anomaly.amount || 0,
-                  isAnomaly: true,
-                  reason: anomaly.reason || "Unusual income pattern",
-                };
-              });
-
-              // Format regular income for anomaly chart
-              const dailyIncomePatterns =
-                data.recommendations?.income_patterns?.by_day || {};
-              const dailyIncome = Object.entries(dailyIncomePatterns).map(
-                ([day, details]) => ({
-                  date: day,
-                  amount: details.average_income || 0,
-                  isAnomaly: false,
-                })
-              );
-
-              // Combine anomalies with regular income
-              const allAnomalyData = [
-                ...dailyIncome,
-                ...formattedAnomalies,
-              ].sort((a, b) => new Date(a.date) - new Date(b.date));
-
+              // income-summary does not provide anomalies; leave anomalyData empty
               // Process real data if we have enough
               if (categoryChartData.length > 0 || monthlyChartData.length > 0) {
                 setCategoryData(categoryChartData);
                 setMonthlyData(monthlyChartData);
-                setAnomalyData(allAnomalyData);
                 setShowDemoData(false);
               }
             } catch (err) {
@@ -349,7 +312,7 @@ export default function IncomeAnalyticsTab() {
             ([name, value]) => ({
               name,
               value,
-            })
+            }),
           );
 
           // Process yearly data
@@ -405,7 +368,7 @@ export default function IncomeAnalyticsTab() {
           anomalies.forEach((anomaly) => {
             // Replace existing entry with anomaly flagged entry
             const existingIndex = anomalyChartData.findIndex(
-              (item) => item.date === anomaly.date
+              (item) => item.date === anomaly.date,
             );
             if (existingIndex >= 0) {
               anomalyChartData[existingIndex] = {
@@ -505,18 +468,18 @@ export default function IncomeAnalyticsTab() {
           doc.text(
             `Total Income: ₹${overview.total_income?.toFixed(2) || 0}`,
             14,
-            38
+            38,
           );
           doc.text(
             `Average Income: ₹${overview.average_income?.toFixed(2) || 0}`,
             14,
-            45
+            45,
           );
           doc.text(`Income Count: ${overview.income_count || 0}`, 14, 52);
           doc.text(
             `Unique Categories: ${overview.unique_categories || 0}`,
             14,
-            59
+            59,
           );
         }
 
@@ -557,7 +520,7 @@ export default function IncomeAnalyticsTab() {
               `₹${details.total_income?.toFixed(2) || 0}`,
               `${details.percentage_of_total?.toFixed(1) || 0}%`,
               details.status || "-",
-            ]
+            ],
           );
 
           autoTable(doc, {
@@ -584,7 +547,7 @@ export default function IncomeAnalyticsTab() {
               `₹${details.total_income?.toFixed(2) || 0}`,
               `₹${details.average_income?.toFixed(2) || 0}`,
               details.income_count || 0,
-            ]
+            ],
           );
 
           autoTable(doc, {
@@ -643,7 +606,7 @@ export default function IncomeAnalyticsTab() {
               `₹${data.predicted_amount?.toFixed(2) || 0}`,
               `₹${data.range?.min?.toFixed(2) || 0} - ₹${data.range?.max?.toFixed(2) || 0}`,
               data.confidence || "medium",
-            ]
+            ],
           );
 
           autoTable(doc, {
@@ -748,7 +711,7 @@ export default function IncomeAnalyticsTab() {
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <Loader/>
+        <Loader />
       </div>
     );
   }
@@ -768,11 +731,7 @@ export default function IncomeAnalyticsTab() {
             disabled={generatingPdf}
             className="flex items-center gap-2"
           >
-            {generatingPdf ? (
-              <Loader/>
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
+            {generatingPdf ? <Loader /> : <Download className="h-4 w-4" />}
             {generatingPdf ? "Generating..." : "Download Report"}
           </Button>
         </div>
@@ -837,7 +796,7 @@ export default function IncomeAnalyticsTab() {
                         key={`cell-${index}`}
                         fill={COLORS[index % COLORS.length]}
                       />
-                    )
+                    ),
                   )}
                 </Pie>
                 <Tooltip formatter={(value) => [`₹${value}`, "Amount"]} />
@@ -931,7 +890,7 @@ export default function IncomeAnalyticsTab() {
                             key={`cell-${index}`}
                             fill={entry.isAnomaly ? "#4caf50" : "#2196f3"}
                           />
-                        )
+                        ),
                       )}
                     </Bar>
                   </BarChart>
@@ -960,7 +919,7 @@ export default function IncomeAnalyticsTab() {
                               .{anomaly.reason && ` ${anomaly.reason}.`}
                               {i < arr.length - 1 ? " " : ""}
                             </span>
-                          )
+                          ),
                         )}
                       </p>
                     </div>
@@ -1009,19 +968,19 @@ export default function IncomeAnalyticsTab() {
                     <p className="text-sm text-gray-500 mt-1">
                       Average Income: ₹
                       {analyticsData.income_analysis.statistics.average_income.toFixed(
-                        2
+                        2,
                       )}
                     </p>
                     <p className="text-sm text-gray-500">
                       Standard Deviation: ₹
                       {analyticsData.income_analysis.statistics.standard_deviation.toFixed(
-                        2
+                        2,
                       )}
                     </p>
                     <p className="text-sm text-gray-500">
                       Anomaly Threshold: ₹
                       {analyticsData.income_analysis.statistics.anomaly_threshold.toFixed(
-                        2
+                        2,
                       )}
                     </p>
                     {analyticsData.income_analysis.summary && (
@@ -1036,7 +995,7 @@ export default function IncomeAnalyticsTab() {
                         <p className="text-sm text-gray-500">
                           Anomaly Percentage:{" "}
                           {analyticsData.income_analysis.summary.anomaly_percentage.toFixed(
-                            2
+                            2,
                           )}
                           %
                         </p>
@@ -1064,7 +1023,7 @@ export default function IncomeAnalyticsTab() {
                 analyticsData.income_insights &&
                 analyticsData.income_insights.category_analysis ? (
                   Object.entries(
-                    analyticsData.income_insights.category_analysis
+                    analyticsData.income_insights.category_analysis,
                   ).map(([category, details], index) => (
                     <div key={index} className="border rounded-lg p-4">
                       <div className="flex items-start gap-3">
@@ -1171,7 +1130,7 @@ export default function IncomeAnalyticsTab() {
                           <p className="text-sm text-gray-500 mt-1">
                             Your average daily income is ₹
                             {analyticsData.income_insights.behavioral_insights.income_velocity.average_daily_spend.toFixed(
-                              2
+                              2,
                             )}
                             . Overall trend:{" "}
                             {
@@ -1258,14 +1217,15 @@ export default function IncomeAnalyticsTab() {
                         Based on your historical patterns, we predict your
                         future total income to be approximately ₹
                         {analyticsData.future_predictions.predictions.total_predicted.toFixed(
-                          2
+                          2,
                         )}
                         .
                         {analyticsData.future_predictions.insights &&
                           analyticsData.future_predictions.insights
                             .categories &&
                           Object.entries(
-                            analyticsData.future_predictions.insights.categories
+                            analyticsData.future_predictions.insights
+                              .categories,
                           ).map(([category, data], index) => (
                             <span key={index}>
                               {" "}
@@ -1295,7 +1255,7 @@ export default function IncomeAnalyticsTab() {
                   <div className="mt-4 space-y-4">
                     <h4 className="font-medium">Growth Tips</h4>
                     {Object.entries(
-                      analyticsData.future_predictions.growth_tips
+                      analyticsData.future_predictions.growth_tips,
                     ).map(([category, tip], index) => (
                       <div
                         key={index}
@@ -1325,7 +1285,7 @@ export default function IncomeAnalyticsTab() {
                   <div className="mt-4 border rounded-lg p-4">
                     <h4 className="font-medium">Category Predictions</h4>
                     {Object.entries(
-                      analyticsData.future_predictions.predictions.categories
+                      analyticsData.future_predictions.predictions.categories,
                     ).map(([category, prediction], index) => (
                       <div key={index} className="mt-2">
                         <p className="text-sm text-gray-500">
@@ -1366,13 +1326,13 @@ export default function IncomeAnalyticsTab() {
                         <p className="text-sm text-gray-500 mt-1">
                           Total Income: ₹
                           {analyticsData.recommendations.overview.total_income.toFixed(
-                            2
+                            2,
                           )}
                         </p>
                         <p className="text-sm text-gray-500">
                           Average Income: ₹
                           {analyticsData.recommendations.overview.average_income.toFixed(
-                            2
+                            2,
                           )}
                         </p>
                         <p className="text-sm text-gray-500">
@@ -1429,7 +1389,7 @@ export default function IncomeAnalyticsTab() {
                                       {rec.priority}
                                     </p>
                                   </div>
-                                )
+                                ),
                               )}
                             </div>
                           </div>
@@ -1468,7 +1428,7 @@ export default function IncomeAnalyticsTab() {
                                       {opp.impact}
                                     </p>
                                   </div>
-                                )
+                                ),
                               )}
                             </div>
                           </div>
@@ -1504,7 +1464,7 @@ export default function IncomeAnalyticsTab() {
                                   Estimated impact: {tipGroup.estimated_impact}
                                 </p>
                               </div>
-                            )
+                            ),
                           )}
                         </div>
                       )}

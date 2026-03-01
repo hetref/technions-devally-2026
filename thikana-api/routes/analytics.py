@@ -10,6 +10,7 @@ Endpoints:
   GET /analytics/recommendations/{user_id}   ← expense recommendations
   GET /analytics/predictions/{user_id}       ← next-month spending forecast
   GET /analytics/income-summary/{user_id}    ← income aggregated by month/category
+  GET /analytics/full-analysis/{user_id}     ← all 4 expense models in 1 Firestore read (fast)
 """
 
 import json
@@ -266,6 +267,88 @@ def get_income_summary(user_id: str):
                 "to":   str(max(timestamps).date()) if timestamps else None,
             },
             "total_entries": len(income_entries),
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/full-analysis/{user_id}")
+def get_full_analysis(user_id: str):
+    """
+    Run ALL 4 expense analytics models with a SINGLE Firestore read.
+
+    Returns a merged response containing:
+      - anomalies        (AnomalyDetector)
+      - insights         (SpendingInsights)
+      - recommendations  (ExpenseRecommender — auto income-relative)
+      - predictions      (SpendingPredictor)
+      - income_summary   (from user_income subcollection)
+
+    Use this endpoint instead of calling the 4 individual endpoints —
+    it performs only 2 Firestore reads total (expenses + income) regardless
+    of how many models run.
+    """
+    try:
+        # ── 2 Firestore reads total ───────────────────────────────────────────
+        transactions   = _get_transactions(user_id)
+        income_entries = _get_income(user_id)
+        monthly_income = _compute_monthly_income(income_entries)
+
+        # ── Run all 4 models in memory (zero additional DB reads) ─────────────
+        anomaly_result  = _detector.detect(transactions, user_id)
+        insights_result = _insights.analyze(transactions, user_id)
+        rec_result      = _recommender.recommend(transactions, user_id, monthly_income)
+        pred_result     = _predictor.predict(transactions, user_id)
+
+        # ── Build income summary inline ───────────────────────────────────────
+        i_monthly: dict    = defaultdict(lambda: {"total": 0.0, "count": 0})
+        i_categories: dict = defaultdict(lambda: {"total": 0.0, "count": 0})
+        i_timestamps       = []
+        for entry in income_entries:
+            amt    = float(entry.get("amount", 0) or 0)
+            cat    = entry.get("category", "Other") or "Other"
+            ts_raw = entry.get("timestamp", "")
+            try:
+                dt  = datetime.fromisoformat(str(ts_raw).replace(" ", "T").rstrip("Z"))
+                key = f"{dt.year}-{dt.month:02d}"
+                i_timestamps.append(dt)
+            except Exception:
+                key = "Unknown"
+            i_monthly[key]["total"]    += amt
+            i_monthly[key]["count"]    += 1
+            i_categories[cat]["total"] += amt
+            i_categories[cat]["count"] += 1
+
+        i_total = round(sum(v["total"] for v in i_monthly.values()), 2)
+        i_valid = {k: v for k, v in i_monthly.items() if k != "Unknown"}
+        income_summary = {
+            "total_income":    i_total,
+            "monthly_average": round(
+                sum(v["total"] for v in i_valid.values()) / max(1, len(i_valid)), 2
+            ),
+            "monthly_breakdown": sorted(
+                [{"month": k, "total": round(v["total"], 2), "count": v["count"]} for k, v in i_monthly.items()],
+                key=lambda x: x["month"],
+            ),
+            "category_breakdown": sorted(
+                [{"category": k, "total": round(v["total"], 2), "count": v["count"]} for k, v in i_categories.items()],
+                key=lambda x: -x["total"],
+            ),
+            "date_range": {
+                "from": str(min(i_timestamps).date()) if i_timestamps else None,
+                "to":   str(max(i_timestamps).date()) if i_timestamps else None,
+            },
+            "total_entries": len(income_entries),
+        }
+
+        return {
+            "user_id":         user_id,
+            "anomalies":       anomaly_result,
+            "insights":        insights_result,
+            "recommendations": rec_result,
+            "predictions":     pred_result,
+            "income_summary":  income_summary,
         }
 
     except Exception as e:

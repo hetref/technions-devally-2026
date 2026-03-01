@@ -82,22 +82,28 @@ import Loader from "@/components/Loader";
 import toast from "react-hot-toast";
 import dynamic from "next/dynamic";
 
-const ContactsTab = dynamic(() => import("@/components/dashboard/ContactsTab"), {
-  loading: () => (
-    <div className="flex justify-center p-8">
-      <Loader />
-    </div>
-  ),
-  ssr: false,
-});
-const PaymentsTab = dynamic(() => import("@/components/dashboard/PaymentsTab"), {
-  loading: () => (
-    <div className="flex justify-center p-8">
-      <Loader />
-    </div>
-  ),
-  ssr: false,
-});
+const ContactsTab = dynamic(
+  () => import("@/components/dashboard/ContactsTab"),
+  {
+    loading: () => (
+      <div className="flex justify-center p-8">
+        <Loader />
+      </div>
+    ),
+    ssr: false,
+  },
+);
+const PaymentsTab = dynamic(
+  () => import("@/components/dashboard/PaymentsTab"),
+  {
+    loading: () => (
+      <div className="flex justify-center p-8">
+        <Loader />
+      </div>
+    ),
+    ssr: false,
+  },
+);
 const PlansTab = dynamic(() => import("@/components/dashboard/PlansTab"), {
   loading: () => (
     <div className="flex justify-center p-8">
@@ -106,14 +112,17 @@ const PlansTab = dynamic(() => import("@/components/dashboard/PlansTab"), {
   ),
   ssr: false,
 });
-const SettingsTab = dynamic(() => import("@/components/dashboard/SettingsTab"), {
-  loading: () => (
-    <div className="flex justify-center p-8">
-      <Loader />
-    </div>
-  ),
-  ssr: false,
-});
+const SettingsTab = dynamic(
+  () => import("@/components/dashboard/SettingsTab"),
+  {
+    loading: () => (
+      <div className="flex justify-center p-8">
+        <Loader />
+      </div>
+    ),
+    ssr: false,
+  },
+);
 const ExpenseTab = dynamic(() => import("@/components/dashboard/ExpenseTab"), {
   loading: () => (
     <div className="flex justify-center p-8">
@@ -122,14 +131,17 @@ const ExpenseTab = dynamic(() => import("@/components/dashboard/ExpenseTab"), {
   ),
   ssr: false,
 });
-const AnalyticsTab = dynamic(() => import("@/components/dashboard/AnalyticsTab"), {
-  loading: () => (
-    <div className="flex justify-center p-8">
-      <Loader />
-    </div>
-  ),
-  ssr: false,
-});
+const AnalyticsTab = dynamic(
+  () => import("@/components/dashboard/AnalyticsTab"),
+  {
+    loading: () => (
+      <div className="flex justify-center p-8">
+        <Loader />
+      </div>
+    ),
+    ssr: false,
+  },
+);
 const IncomeTab = dynamic(() => import("@/components/dashboard/IncomeTab"), {
   loading: () => (
     <div className="flex justify-center p-8">
@@ -147,16 +159,8 @@ const IncomeAnalyticsTab = dynamic(
       </div>
     ),
     ssr: false,
-  }
+  },
 );
-const TicketsTab = dynamic(() => import("@/components/dashboard/TicketsTab"), {
-  loading: () => (
-    <div className="flex justify-center p-8">
-      <Loader />
-    </div>
-  ),
-  ssr: false,
-});
 const OrdersTab = dynamic(() => import("@/components/dashboard/OrdersTab"), {
   loading: () => (
     <div className="flex justify-center p-8">
@@ -173,20 +177,8 @@ const MembersTab = dynamic(() => import("@/components/dashboard/MembersTab"), {
   ),
   ssr: false,
 });
-const AppointmentsTab = dynamic(
-  () => import("@/components/dashboard/AppointmentsTab"),
-  {
-    loading: () => (
-      <div className="flex justify-center p-8">
-        <Loader />
-      </div>
-    ),
-    ssr: false,
-  }
-);
-
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState("tickets");
+  const [activeTab, setActiveTab] = useState("contacts");
   const [activeTransactionTab, setActiveTransactionTab] = useState("expenses");
   const [activeAnalyticsTab, setActiveAnalyticsTab] =
     useState("expense-analytics");
@@ -245,7 +237,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <Loader/>
+        <Loader />
       </div>
     );
   }
@@ -267,7 +259,8 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent">
-                        Welcome back, {userData?.businessName || "Business Owner"}
+                        Welcome back,{" "}
+                        {userData?.businessName || "Business Owner"}
                       </h1>
                       <p className="text-gray-600 mt-1 text-sm sm:text-base">
                         Manage your business with powerful insights and tools
@@ -283,20 +276,13 @@ export default function DashboardPage() {
               <div className="hidden md:block mb-8">
                 <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
                   <CardContent className="p-2">
-                    <TabsList className="grid grid-cols-5 lg:grid-cols-9 w-full bg-transparent gap-1 p-1">
+                    <TabsList className="grid grid-cols-4 lg:grid-cols-7 w-full bg-transparent gap-1 p-1">
                       <TabsTrigger
                         value="contacts"
                         className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white transition-all duration-300 hover:scale-105 rounded-xl"
                       >
                         <MessageSquare className="h-4 w-4" />
                         <span className="hidden lg:inline">Contacts</span>
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="tickets"
-                        className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white transition-all duration-300 hover:scale-105 rounded-xl"
-                      >
-                        <Inbox className="h-4 w-4" />
-                        <span className="hidden lg:inline">Tickets</span>
                       </TabsTrigger>
                       <TabsTrigger
                         value="payments"
@@ -334,14 +320,6 @@ export default function DashboardPage() {
                         <span className="hidden lg:inline">Analytics</span>
                       </TabsTrigger>
                       <TabsTrigger
-                        value="appointments"
-                        className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white transition-all duration-300 hover:scale-105 rounded-xl"
-                      >
-                        <Calendar className="h-4 w-4" />
-                        <span className="hidden lg:inline">Appointments</span>
-                      </TabsTrigger>
-
-                      <TabsTrigger
                         value="settings"
                         className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white transition-all duration-300 hover:scale-105 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={userRole === "member"}
@@ -366,13 +344,6 @@ export default function DashboardPage() {
                         >
                           <MessageSquare className="h-4 w-4" />
                           <span className="text-sm">Contacts</span>
-                        </TabsTrigger>
-                        <TabsTrigger
-                          value="tickets"
-                          className="flex items-center gap-2 whitespace-nowrap px-4 py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white transition-all duration-300 rounded-lg"
-                        >
-                          <Inbox className="h-4 w-4" />
-                          <span className="text-sm">Tickets</span>
                         </TabsTrigger>
                         <TabsTrigger
                           value="payments"
@@ -410,13 +381,6 @@ export default function DashboardPage() {
                           <span className="text-sm">Analytics</span>
                         </TabsTrigger>
                         <TabsTrigger
-                          value="appointments"
-                          className="flex items-center gap-2 whitespace-nowrap px-4 py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white transition-all duration-300 rounded-lg"
-                        >
-                          <Calendar className="h-4 w-4" />
-                          <span className="text-sm">Appointments</span>
-                        </TabsTrigger>
-                        <TabsTrigger
                           value="settings"
                           className="flex items-center gap-2 whitespace-nowrap px-4 py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white transition-all duration-300 rounded-lg"
                         >
@@ -435,10 +399,6 @@ export default function DashboardPage() {
                   <ContactsTab />
                 </TabsContent>
 
-                <TabsContent value="tickets" className="space-y-6 mt-0">
-                  <TicketsTab />
-                </TabsContent>
-
                 <TabsContent value="payments" className="space-y-6 mt-0">
                   <PaymentsTab />
                 </TabsContent>
@@ -455,14 +415,14 @@ export default function DashboardPage() {
                         onValueChange={setActiveTransactionTab}
                       >
                         <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-xl">
-                          <TabsTrigger 
-                            value="expenses" 
+                          <TabsTrigger
+                            value="expenses"
                             className="data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200 rounded-lg"
                           >
                             Expenses
                           </TabsTrigger>
-                          <TabsTrigger 
-                            value="income" 
+                          <TabsTrigger
+                            value="income"
                             className="data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200 rounded-lg"
                           >
                             Income
@@ -495,14 +455,14 @@ export default function DashboardPage() {
                         onValueChange={setActiveAnalyticsTab}
                       >
                         <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-xl">
-                          <TabsTrigger 
-                            value="expense-analytics" 
+                          <TabsTrigger
+                            value="expense-analytics"
                             className="data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200 rounded-lg text-xs sm:text-sm"
                           >
                             Expense Analytics
                           </TabsTrigger>
-                          <TabsTrigger 
-                            value="income-analytics" 
+                          <TabsTrigger
+                            value="income-analytics"
                             className="data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200 rounded-lg text-xs sm:text-sm"
                           >
                             Income Analytics
@@ -510,11 +470,17 @@ export default function DashboardPage() {
                         </TabsList>
 
                         <div className="mt-6">
-                          <TabsContent value="expense-analytics" className="mt-0">
+                          <TabsContent
+                            value="expense-analytics"
+                            className="mt-0"
+                          >
                             <AnalyticsTab />
                           </TabsContent>
 
-                          <TabsContent value="income-analytics" className="mt-0">
+                          <TabsContent
+                            value="income-analytics"
+                            className="mt-0"
+                          >
                             <IncomeAnalyticsTab />
                           </TabsContent>
                         </div>
@@ -522,12 +488,6 @@ export default function DashboardPage() {
                     </CardContent>
                   </Card>
                 </TabsContent>
-
-                <TabsContent value="appointments" className="space-y-6 mt-0">
-                  <AppointmentsTab />
-                </TabsContent>
-
-
 
                 <TabsContent value="settings" className="space-y-6 mt-0">
                   <SettingsTab />
