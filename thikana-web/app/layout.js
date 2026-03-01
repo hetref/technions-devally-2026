@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "react-hot-toast";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
+import Script from "next/script";
 
 // Bricolage Grotesque — wide, expressive display. Very distinctive 2025 startup font.
 const bricolage = Bricolage_Grotesque({
@@ -38,6 +39,7 @@ export default function RootLayout({ children }) {
             <div className="relative flex min-h-screen h-full flex-col">
               <main className="flex-1">{children}</main>
             </div>
+            <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="beforeInteractive" />
             <Toaster />
             <ThemeSwitcher />
           </AuthProvider>

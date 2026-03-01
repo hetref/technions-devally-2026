@@ -299,12 +299,27 @@ export default function BasicInfoForm() {
 
   async function updateProfile(userData) {
     try {
+      // Strip undefined values — Firestore rejects them
+      const stripUndefined = (obj) =>
+        Object.fromEntries(
+          Object.entries(obj)
+            .filter(([, v]) => v !== undefined)
+            .map(([k, v]) => [
+              k,
+              v && typeof v === "object" && !Array.isArray(v)
+                ? stripUndefined(v)
+                : v,
+            ])
+        );
+
+      const cleanUserData = stripUndefined(userData);
+
       // Update user document
       const userRef = doc(db, "users", user.uid);
       await setDoc(
         userRef,
         {
-          ...userData,
+          ...cleanUserData,
           businessTags,
           business_categories: businessCategories,
         },
@@ -419,6 +434,13 @@ export default function BasicInfoForm() {
         ...data,
       };
 
+      // Strip undefined values — Firestore does not accept undefined fields
+      const cleanData = (obj) =>
+        Object.fromEntries(
+          Object.entries(obj).filter(([, v]) => v !== undefined && v !== null || typeof v === "boolean" || typeof v === "number")
+            .map(([k, v]) => [k, (v && typeof v === "object" && !Array.isArray(v)) ? cleanData(v) : (v ?? "")])
+        );
+
       // Only add image URLs if they were successfully uploaded
       if (profileImageUrl) {
         updatedData.profilePic = profileImageUrl;
@@ -434,9 +456,9 @@ export default function BasicInfoForm() {
         coverImg: 0,
       });
 
-      // Save to Firestore
+      // Save to Firestore — clean undefined values first
       try {
-        await updateProfile(updatedData);
+        await updateProfile(cleanData(updatedData));
         toast.success("Details Saved Successfully!", { id: toastId });
       } catch (updateError) {
         console.error("Failed to save data to Firestore:", updateError);

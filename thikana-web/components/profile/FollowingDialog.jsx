@@ -188,7 +188,7 @@ const FollowingDialog = ({ followingCount, userId, className, viewOnly = false, 
                                     </Badge>
                                     <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 font-medium">
                                         <User className="h-3 w-3 mr-1" />
-                                        {followingCount - businessCount} Users
+                                        {(following.length - businessCount) || 0} Users
                                     </Badge>
                                 </div>
                             )}
