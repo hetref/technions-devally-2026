@@ -90,8 +90,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1400px] px-4 py-[15px]">
-      {/* Header */}
+    <div className="container mx-auto py-[15px] pb-8">
       <div className="flex flex-col space-y-1 mb-6">
         <h1 className="text-3xl font-bold">Settings</h1>
         <p className="text-muted-foreground">
@@ -112,147 +111,88 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Tabs root — layout is handled by the inner flex wrapper,
-          so the component's own flex-col orientation doesn't interfere. */}
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Content area — left / main */}
-          <div className="flex-1 min-w-0 order-2 md:order-1">
-            <TabsContent value="basic-info" className="mt-0">
-              <BasicInfoForm />
-            </TabsContent>
-
-            <TabsContent value="razorpay-connect" className="mt-0">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Connect Razorpay</CardTitle>
-                  <CardDescription>
-                    Link your Razorpay account via OAuth to enable transaction
-                    viewing and payment link generation.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ConnectRazorpay
-                    isConnected={businessActivity?.razorpayConnected}
-                    accountId={businessActivity?.razorpayAccountId}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="business-info" className="mt-0">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Business Information</CardTitle>
-                  <CardDescription>
-                    {userRole === "member"
-                      ? "View information about the business."
-                      : "Manage detailed information about your business."}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <BusinessInfoForm
-                    readOnly={userRole === "member"}
-                    businessId={userRole === "member" ? businessId : null}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="activity" className="mt-0">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Business Activity</CardTitle>
-                  <CardDescription>
-                    A quick overview of your business presence on Thikana.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {businessActivity ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                      {[
-                        { label: "Posts", value: businessActivity.totalPosts },
-                        {
-                          label: "Products",
-                          value: businessActivity.totalProducts,
-                        },
-                        {
-                          label: "Followers",
-                          value: businessActivity.followers,
-                        },
-                        {
-                          label: "Following",
-                          value: businessActivity.following,
-                        },
-                        {
-                          label: "Razorpay",
-                          value: businessActivity.razorpayConnected
-                            ? "Connected"
-                            : "Not Connected",
-                        },
-                      ].map((item) => (
-                        <div
-                          key={item.label}
-                          className="rounded-lg border p-4 text-center"
-                        >
-                          <p className="text-2xl font-bold">{item.value}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {item.label}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground">
-                      No activity data yet.
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </div>
-
-          {/* Sidebar navigation — right */}
-          <div className="w-full md:w-64 lg:w-72 shrink-0 order-1 md:order-2">
-            <div className="md:sticky md:top-[90px]">
-              <TabsList className="flex flex-row md:flex-col w-full h-auto bg-muted/50 rounded-xl p-2 gap-1 overflow-x-auto md:overflow-x-visible">
-                {userRole !== "member" && (
-                  <>
-                    <TabsTrigger
-                      value="basic-info"
-                      className="w-full justify-start gap-2 px-3 py-2.5 text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                    >
-                      <User className="h-4 w-4 shrink-0" />
-                      <span className="hidden sm:inline">Basic Info</span>
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="razorpay-connect"
-                      className="w-full justify-start gap-2 px-3 py-2.5 text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                    >
-                      <Link2 className="h-4 w-4 shrink-0" />
-                      <span className="hidden sm:inline">
-                        Connect Razorpay
-                      </span>
-                    </TabsTrigger>
-                  </>
-                )}
-                <TabsTrigger
-                  value="business-info"
-                  className="w-full justify-start gap-2 px-3 py-2.5 text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"
+      <Tabs
+        orientation="vertical"
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="flex flex-col md:flex-row gap-8 mt-6"
+      >
+        {/* Left Sidebar (Tabs) */}
+        <div className="w-full md:w-1/4 h-fit md:sticky md:top-[120px]">
+          <TabsList className="flex flex-col w-full h-auto bg-transparent space-y-2 p-0">
+            {userRole !== "member" && (
+              <>
+                <TabsTrigger 
+                  value="basic-info" 
+                  className="w-full justify-start px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-xl text-gray-600 data-[state=active]:text-blue-600 transition-all font-medium"
                 >
-                  <Building className="h-4 w-4 shrink-0" />
-                  <span className="hidden sm:inline">Business Info</span>
+                  <User className="h-5 w-5 mr-3" />
+                  Basic Information
                 </TabsTrigger>
-                <TabsTrigger
-                  value="activity"
-                  className="w-full justify-start gap-2 px-3 py-2.5 text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                
+                <TabsTrigger 
+                  value="payment" 
+                  className="w-full justify-start px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-xl text-gray-600 data-[state=active]:text-blue-600 transition-all font-medium"
                 >
-                  <Activity className="h-4 w-4 shrink-0" />
-                  <span className="hidden sm:inline">Activity</span>
+                  <CreditCard className="h-5 w-5 mr-3" />
+                  Payment Settings
                 </TabsTrigger>
-              </TabsList>
-            </div>
-          </div>
+              </>
+            )}
+            <TabsTrigger 
+              value="business-info" 
+              className="w-full justify-start px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-xl text-gray-600 data-[state=active]:text-blue-600 transition-all font-medium"
+            >
+              <Building className="h-5 w-5 mr-3" />
+              Business Information
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* Right Content */}
+        <div className="w-full md:w-3/4">
+          <TabsContent value="basic-info" className="mt-0 outline-none animate-in fade-in-50">
+            <BasicInfoForm />
+          </TabsContent>
+          
+          <TabsContent value="payment" className="mt-0 outline-none animate-in fade-in-50">
+            <Card className="border-0 shadow-lg bg-white/50 backdrop-blur-sm rounded-2xl overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100 pb-6">
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-blue-600" />
+                  Payment Settings
+                </CardTitle>
+                <CardDescription className="text-gray-600">
+                  Configure your Razorpay payment credentials to receive direct transfers.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <PaymentForm />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="business-info" className="mt-0 outline-none animate-in fade-in-50">
+            <Card className="border-0 shadow-lg bg-white/50 backdrop-blur-sm rounded-2xl overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-gray-100 pb-6">
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  <Building className="w-5 h-5 text-emerald-600" />
+                  Business Information
+                </CardTitle>
+                <CardDescription className="text-gray-600">
+                  {userRole === "member"
+                    ? "View information about the business."
+                    : "Manage detailed information about your business."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <BusinessInfoForm
+                  readOnly={userRole === "member"}
+                  businessId={userRole === "member" ? businessId : null}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
         </div>
       </Tabs>
     </div>

@@ -107,6 +107,7 @@ export default function TemplateSection() {
 
   const [confirmTemplate, setConfirmTemplate] = useState(null);
   const [imported, setImported] = useState(null);
+  const [showAll, setShowAll] = useState(false);
 
   const doImport = useCallback(
     async (template) => {
@@ -193,7 +194,7 @@ export default function TemplateSection() {
 
       {/* ── Template Cards ────────────────────────────────── */}
       <div className="space-y-3">
-        {templatePresets.map((template) => (
+        {(showAll ? templatePresets : templatePresets.slice(0, 3)).map((template) => (
           <div key={template.id} className="relative">
             <TemplateCard template={template} onImport={handleImport} />
             {/* Imported check overlay */}
@@ -208,6 +209,15 @@ export default function TemplateSection() {
           </div>
         ))}
       </div>
+
+      {!showAll && templatePresets.length > 3 && (
+        <button
+          onClick={() => setShowAll(true)}
+          className="w-full py-2.5 mt-2 text-[11px] font-semibold text-slate-400 bg-slate-800/50 hover:bg-slate-800 hover:text-white rounded-lg transition-colors border border-dashed border-slate-700 hover:border-slate-500"
+        >
+          Show more templates
+        </button>
+      )}
     </div>
   );
 }

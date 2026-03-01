@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import NearbyBusinessMap from "@/components/profile/NearbyBusinessMap";
+import WhoToFollow from "@/components/WhoToFollow";
 import { usePathname } from "next/navigation";
 
 const WithRecommendationsLayout = ({ children }) => {
@@ -13,53 +14,73 @@ const WithRecommendationsLayout = ({ children }) => {
 
     // Check if we're on the feed page
     const isFeedPage = pathname === "/feed";
-    // Hide both sidebars on notifications page
-    // Previously used to hide on notifications; not needed now
 
     // Disable body scroll on feed page
     useEffect(() => {
         if (isFeedPage) {
-            // Disable body scroll
             document.body.style.overflow = 'hidden';
         } else {
-            // Re-enable body scroll
             document.body.style.overflow = 'auto';
         }
-
-        // Cleanup function to re-enable scroll when component unmounts
         return () => {
             document.body.style.overflow = 'auto';
         };
     }, [isFeedPage]);
 
-    // Use 2-column layout for profile sub-routes, 3-column for others
-    // Increased sidebar widths from 300px to 400px
-    const gridColsClass = isProfileRoute
-        ? "grid-cols-1"
-        : "grid-cols-1 lg:grid-cols-[400px_1fr]";
+    // Profile routes get a 1-column layout
+    if (isProfileRoute) {
+        return (
+            <div className="w-full">
+                <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 max-w-[1900px] mx-auto">
+                    <main className="w-full">{children}</main>
+                </div>
+            </div>
+        );
+    }
 
-    return (
-        <div className="w-full">
-            <div className={`grid ${gridColsClass} gap-4 px-4 lg:px-6 max-w-[1900px] mx-auto`}>
-                {!isProfileRoute && (
+    // Feed page gets a 3-column layout: Sidebar | Feed | WhoToFollow
+    if (isFeedPage) {
+        return (
+            <div className="w-full">
+                <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr_300px] xl:grid-cols-[340px_1fr_320px] gap-0 lg:gap-6 px-4 lg:px-8 max-w-[1400px] mx-auto">
+                    {/* Left Sidebar — Profile + Map */}
                     <aside className="hidden lg:block">
-                        <div className="sticky top-20">
-                            <div className="mb-4">
-                                <Sidebar />
-                            </div>
-                            {isFeedPage && (
-                                <div className="h-[400px]">
-                                    <NearbyBusinessMap
-                                        height="280px"
-                                        width="450px"
-                                        cardHeight="400px"
-                                    />
-                                </div>
-                            )}
+                        <div className="sticky top-20 space-y-4">
+                            <Sidebar />
+                            <NearbyBusinessMap
+                                height="240px"
+                                width="100%"
+                                cardHeight="400px"
+                            />
                         </div>
                     </aside>
-                )}
-                <main className={`${isProfileRoute ? 'w-full' : 'w-full justify-self-start'} ${isFeedPage ? 'max-h-screen overflow-y-auto' : ''}`}>{children}</main>
+
+                    {/* Center — Feed */}
+                    <main className="w-full max-h-screen overflow-y-auto">
+                        {children}
+                    </main>
+
+                    {/* Right Sidebar — Who to Follow */}
+                    <aside className="hidden lg:block">
+                        <div className="sticky top-20 space-y-4">
+                            <WhoToFollow />
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        );
+    }
+
+    // Other pages (search, notifications, etc.) — 2-column layout
+    return (
+        <div className="w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-4 px-4 lg:px-6 max-w-[1900px] mx-auto">
+                <aside className="hidden lg:block">
+                    <div className="sticky top-20 space-y-4">
+                        <Sidebar />
+                    </div>
+                </aside>
+                <main className="w-full justify-self-start">{children}</main>
             </div>
         </div>
     );

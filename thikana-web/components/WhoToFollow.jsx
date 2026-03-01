@@ -75,7 +75,38 @@ export default function WhoToFollow() {
         );
     }
 
-    if (error || !suggestions.length) return null;
+    if (error || !suggestions.length) {
+        return (
+            <Card className="rounded-2xl border border-gray-100 shadow-sm bg-white">
+                <CardContent className="p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-semibold text-gray-900 tracking-wide uppercase">
+                            Suggested for you
+                        </h3>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={refetch}
+                            className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600"
+                        >
+                            <RefreshCw className="h-3.5 w-3.5" />
+                        </Button>
+                    </div>
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-orange-50 to-red-50 rounded-full flex items-center justify-center mb-3">
+                            <Store className="h-5 w-5 text-orange-400" />
+                        </div>
+                        <p className="text-sm font-medium text-gray-700 mb-1">No nearby businesses</p>
+                        <p className="text-xs text-gray-400 leading-relaxed max-w-[200px]">
+                            {error
+                                ? "Couldn't load suggestions. Tap refresh to try again."
+                                : "You're following everyone nearby! Check back later for new businesses."}
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
 
     return (
         <Card className="rounded-2xl border border-gray-100 shadow-sm bg-white">

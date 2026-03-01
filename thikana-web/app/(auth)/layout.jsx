@@ -10,7 +10,7 @@ export default function AuthLayout({ children }) {
 
     useEffect(() => {
         if (!loading && user) {
-            router.replace("/dashboard");
+            router.replace("/feed");
         }
     }, [user, loading, router]);
 
