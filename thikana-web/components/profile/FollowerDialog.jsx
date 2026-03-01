@@ -42,6 +42,19 @@ const FollowerDialog = ({ followerCount, userId, className, viewOnly = false, op
     // Check if this is a controlled dialog (used externally)
     const isControlled = open !== undefined && onOpenChange !== undefined;
 
+    // Internal open state for uncontrolled mode
+    const [internalOpen, setInternalOpen] = useState(false);
+    const effectiveOpen = isControlled ? open : internalOpen;
+
+    const handleOpenChange = (newOpen) => {
+        if (!canView && newOpen) return;
+        if (isControlled) {
+            onOpenChange?.(newOpen);
+        } else {
+            setInternalOpen(newOpen);
+        }
+    };
+
     useEffect(() => {
         const fetchFollowers = async () => {
             if (!userId) return;
@@ -69,10 +82,10 @@ const FollowerDialog = ({ followerCount, userId, className, viewOnly = false, op
             }
         };
 
-        if (open) {
+        if (effectiveOpen) {
             fetchFollowers();
         }
-    }, [userId, open]);
+    }, [userId, effectiveOpen]);
 
     const handleRemoveFollower = async (followerId) => {
         if (!currentUser || loadingId) return;
@@ -134,7 +147,7 @@ const FollowerDialog = ({ followerCount, userId, className, viewOnly = false, op
     };
 
     return (
-        <Dialog open={open} onOpenChange={canView ? onOpenChange : undefined}>
+        <Dialog open={effectiveOpen} onOpenChange={handleOpenChange}>
             {/* Only render DialogTrigger if not controlled */}
             {!isControlled && (
                 children ? (
@@ -159,7 +172,7 @@ const FollowerDialog = ({ followerCount, userId, className, viewOnly = false, op
                     </DialogTrigger>
                 )
             )}
-            {canView && (
+            {(canView || effectiveOpen) && (
                 <DialogContent className="sm:max-w-lg max-h-[80vh] flex flex-col p-0">
                     {/* Header */}
                     <div className="p-6 pb-4 border-b border-gray-100">

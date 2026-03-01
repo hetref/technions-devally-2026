@@ -12,10 +12,15 @@ import {
 import { auth, db } from "@/lib/firebase";
 import { getDoc, doc } from "firebase/firestore";
 import BasicInfoForm from "@/components/BasicInfoForm";
-import PaymentForm from "@/components/PaymentForm";
 import BusinessInfoForm from "@/components/BusinessInfoForm";
+import ConnectRazorpay from "@/components/ConnectRazorpay";
 import toast from "react-hot-toast";
-import { AlertCircle, User, CreditCard, Building } from "lucide-react";
+import {
+  AlertCircle,
+  User,
+  Building,
+  Link2,
+} from "lucide-react";
 import Loader from "@/components/Loader";
 
 export default function SettingsPage() {
@@ -23,6 +28,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
   const [businessId, setBusinessId] = useState(null);
+  const [businessActivity, setBusinessActivity] = useState(null);
 
   useEffect(() => {
     const checkUserRole = async () => {
@@ -42,6 +48,17 @@ export default function SettingsPage() {
             setActiveTab("business-info");
             setBusinessId(userData.businessId);
           }
+
+          // Load business activity data
+          setBusinessActivity({
+            totalPosts: userData.totalPosts || 0,
+            totalProducts: userData.totalProducts || 0,
+            followers: userData.followers?.length || 0,
+            following: userData.following?.length || 0,
+            razorpayConnected: !!userData.razorpayConnected,
+            razorpayAccountId: userData.razorpayAccountId || null,
+            createdAt: userData.createdAt || null,
+          });
         }
       } catch (error) {
         console.error("Error checking user role:", error);
@@ -66,7 +83,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="container mx-auto py-[30px] flex justify-center items-center min-h-[60vh]">
-        <Loader/>
+        <Loader />
       </div>
     );
   }
@@ -75,15 +92,15 @@ export default function SettingsPage() {
     <div className="container mx-auto py-[15px] pb-8">
       <div className="flex flex-col space-y-1 mb-6">
         <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-gray-500">
+        <p className="text-muted-foreground">
           Update your account and business settings.
         </p>
       </div>
 
       {userRole === "member" && (
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-md">
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-md mb-6">
           <div className="flex items-center">
-            <AlertCircle className="h-5 w-5 mr-2" />
+            <AlertCircle className="h-5 w-5 mr-2 shrink-0" />
             <span className="font-medium">Member Access:</span>
             <span className="ml-1">
               As a member, you can view business information but cannot modify
@@ -113,11 +130,11 @@ export default function SettingsPage() {
                 </TabsTrigger>
                 
                 <TabsTrigger 
-                  value="payment" 
+                  value="razorpay-connect" 
                   className="w-full justify-start px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-xl text-gray-600 data-[state=active]:text-blue-600 transition-all font-medium"
                 >
-                  <CreditCard className="h-5 w-5 mr-3" />
-                  Payment Settings
+                  <Link2 className="h-5 w-5 mr-3" />
+                  Connect Razorpay
                 </TabsTrigger>
               </>
             )}
@@ -137,19 +154,22 @@ export default function SettingsPage() {
             <BasicInfoForm />
           </TabsContent>
           
-          <TabsContent value="payment" className="mt-0 outline-none animate-in fade-in-50">
+          <TabsContent value="razorpay-connect" className="mt-0 outline-none animate-in fade-in-50">
             <Card className="border-0 shadow-lg bg-white/50 backdrop-blur-sm rounded-2xl overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100 pb-6">
                 <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-blue-600" />
-                  Payment Settings
+                  <Link2 className="w-5 h-5 text-blue-600" />
+                  Connect Razorpay
                 </CardTitle>
                 <CardDescription className="text-gray-600">
-                  Configure your Razorpay payment credentials to receive direct transfers.
+                  Link your Razorpay account via OAuth to enable transactions and payment links.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6">
-                <PaymentForm />
+                <ConnectRazorpay
+                  isConnected={businessActivity?.razorpayConnected}
+                  accountId={businessActivity?.razorpayAccountId}
+                />
               </CardContent>
             </Card>
           </TabsContent>
