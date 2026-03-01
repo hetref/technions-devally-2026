@@ -20,7 +20,6 @@ import {
   User,
   Building,
   Link2,
-  Activity,
 } from "lucide-react";
 import Loader from "@/components/Loader";
 
@@ -131,11 +130,11 @@ export default function SettingsPage() {
                 </TabsTrigger>
                 
                 <TabsTrigger 
-                  value="payment" 
+                  value="razorpay-connect" 
                   className="w-full justify-start px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-xl text-gray-600 data-[state=active]:text-blue-600 transition-all font-medium"
                 >
-                  <CreditCard className="h-5 w-5 mr-3" />
-                  Payment Settings
+                  <Link2 className="h-5 w-5 mr-3" />
+                  Connect Razorpay
                 </TabsTrigger>
               </>
             )}
@@ -155,19 +154,22 @@ export default function SettingsPage() {
             <BasicInfoForm />
           </TabsContent>
           
-          <TabsContent value="payment" className="mt-0 outline-none animate-in fade-in-50">
+          <TabsContent value="razorpay-connect" className="mt-0 outline-none animate-in fade-in-50">
             <Card className="border-0 shadow-lg bg-white/50 backdrop-blur-sm rounded-2xl overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100 pb-6">
                 <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-blue-600" />
-                  Payment Settings
+                  <Link2 className="w-5 h-5 text-blue-600" />
+                  Connect Razorpay
                 </CardTitle>
                 <CardDescription className="text-gray-600">
-                  Configure your Razorpay payment credentials to receive direct transfers.
+                  Link your Razorpay account via OAuth to enable transactions and payment links.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6">
-                <PaymentForm />
+                <ConnectRazorpay
+                  isConnected={businessActivity?.razorpayConnected}
+                  accountId={businessActivity?.razorpayAccountId}
+                />
               </CardContent>
             </Card>
           </TabsContent>
