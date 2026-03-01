@@ -566,6 +566,22 @@ export default function Toolbar({ saving: autoSaving, lastSaved, saveError, tena
 
 
 
+          {/* Preview Button */}
+          <button
+            onClick={() => {
+              if (businessId && siteId && pageId) {
+                window.open(`/site/${businessId}/${siteId}/${pageId}`, "_blank");
+              } else {
+                alert("Save the page first to preview it.");
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-full transition-colors border border-emerald-200"
+            title="Preview Page"
+          >
+            <Eye size={14} />
+            <span className="hidden sm:inline">Preview</span>
+          </button>
+
           {/* SEO Button */}
           <button
             onClick={() => setShowSEOModal(true)}
