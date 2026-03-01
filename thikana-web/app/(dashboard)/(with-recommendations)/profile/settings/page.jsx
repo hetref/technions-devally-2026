@@ -72,8 +72,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="container mx-auto py-[15px]">
-      <div className="flex flex-col space-y-2">
+    <div className="container mx-auto py-[15px] pb-8">
+      <div className="flex flex-col space-y-1 mb-6">
         <h1 className="text-3xl font-bold">Settings</h1>
         <p className="text-gray-500">
           Update your account and business settings.
@@ -96,36 +96,77 @@ export default function SettingsPage() {
       <Tabs
         value={activeTab}
         onValueChange={handleTabChange}
-        className="flex flex-col-reverse md:flex-row gap-6"
+        className="flex flex-col md:flex-row gap-8 mt-6"
       >
+        {/* Left Sidebar (Tabs) */}
+        <div className="w-full md:w-1/4 h-fit md:sticky md:top-[120px]">
+          <TabsList className="flex flex-col w-full h-auto bg-transparent space-y-2 p-0">
+            {userRole !== "member" && (
+              <>
+                <TabsTrigger 
+                  value="basic-info" 
+                  className="w-full justify-start px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-xl text-gray-600 data-[state=active]:text-blue-600 transition-all font-medium"
+                >
+                  <User className="h-5 w-5 mr-3" />
+                  Basic Information
+                </TabsTrigger>
+                
+                <TabsTrigger 
+                  value="payment" 
+                  className="w-full justify-start px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-xl text-gray-600 data-[state=active]:text-blue-600 transition-all font-medium"
+                >
+                  <CreditCard className="h-5 w-5 mr-3" />
+                  Payment Settings
+                </TabsTrigger>
+              </>
+            )}
+            <TabsTrigger 
+              value="business-info" 
+              className="w-full justify-start px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-xl text-gray-600 data-[state=active]:text-blue-600 transition-all font-medium"
+            >
+              <Building className="h-5 w-5 mr-3" />
+              Business Information
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* Right Content */}
         <div className="w-full md:w-3/4">
-          <TabsContent value="basic-info">
+          <TabsContent value="basic-info" className="mt-0 outline-none animate-in fade-in-50">
             <BasicInfoForm />
           </TabsContent>
-          <TabsContent value="payment">
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Settings</CardTitle>
-                <CardDescription>
-                  Configure your Razorpay payment credentials.
+          
+          <TabsContent value="payment" className="mt-0 outline-none animate-in fade-in-50">
+            <Card className="border-0 shadow-lg bg-white/50 backdrop-blur-sm rounded-2xl overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100 pb-6">
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-blue-600" />
+                  Payment Settings
+                </CardTitle>
+                <CardDescription className="text-gray-600">
+                  Configure your Razorpay payment credentials to receive direct transfers.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                 <PaymentForm />
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="business-info">
-            <Card>
-              <CardHeader>
-                <CardTitle>Business Information</CardTitle>
-                <CardDescription>
+          
+          <TabsContent value="business-info" className="mt-0 outline-none animate-in fade-in-50">
+            <Card className="border-0 shadow-lg bg-white/50 backdrop-blur-sm rounded-2xl overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-gray-100 pb-6">
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  <Building className="w-5 h-5 text-emerald-600" />
+                  Business Information
+                </CardTitle>
+                <CardDescription className="text-gray-600">
                   {userRole === "member"
                     ? "View information about the business."
                     : "Manage detailed information about your business."}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                 <BusinessInfoForm
                   readOnly={userRole === "member"}
                   businessId={userRole === "member" ? businessId : null}
@@ -133,28 +174,6 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-        </div>
-        <div className="w-full md:w-1/4 h-fit md:sticky md:top-[80px]">
-          <TabsList className="flex flex-col w-full h-full space-y-2">
-            {userRole !== "member" && (
-              <>
-                <TabsTrigger value="basic-info" className="w-full">
-                  <User className="h-4 w-4 mr-2" />
-                  Basic Information
-                </TabsTrigger>
-                <div className="w-full h-[1px] bg-gray-100 rounded-full" />
-                <TabsTrigger value="payment" className="w-full">
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Payment Settings
-                </TabsTrigger>
-                <div className="w-full h-[1px] bg-gray-100 rounded-full" />
-              </>
-            )}
-            <TabsTrigger value="business-info" className="w-full">
-              <Building className="h-4 w-4 mr-2" />
-              Business Information
-            </TabsTrigger>
-          </TabsList>
         </div>
       </Tabs>
     </div>

@@ -1402,9 +1402,7 @@ export default function Profile() {
                                                             <span className="hidden sm:block">Photos</span>
                                                         </TabsTrigger>
 
-                                                        {userData?.business_categories?.includes(
-                                                            "product"
-                                                        ) && (
+                                                        {isBusinessUser && (
                                                                 <TabsTrigger
                                                                     title="Products"
                                                                     value="products"
@@ -1623,6 +1621,33 @@ export default function Profile() {
                                                                     userId={userId}
                                                                     userData={userData}
                                                                     currentUserView={true}
+                                                                />
+                                                            )}
+                                                        </div>
+                                                    </TabsContent>
+                                                )}
+
+                                                {/* Products tab */}
+                                                {isBusinessUser && (
+                                                    <TabsContent
+                                                        value="products"
+                                                        className="p-8 focus-visible:outline-none focus:outline-none transition-all duration-300 animate-in fade-in-50"
+                                                    >
+                                                        <div className="space-y-6">
+                                                            <div className="flex items-center justify-between">
+                                                                <h2 className="text-2xl font-bold text-gray-900">
+                                                                    Products
+                                                                </h2>
+                                                                <div className="text-sm text-gray-500 bg-orange-50 text-orange-600 px-3 py-1 rounded-full border border-orange-200">
+                                                                    Business Products
+                                                                </div>
+                                                            </div>
+                                                            {userData && user && (
+                                                                <ShowProductsTabContent
+                                                                    userId={userId}
+                                                                    userData={userData}
+                                                                    currentUserView={true}
+                                                                    isViewOnly={false}
                                                                 />
                                                             )}
                                                         </div>

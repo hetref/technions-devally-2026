@@ -124,8 +124,8 @@ export function ProductGrid({ userId, userData, userType = "customer" }) {
           >
             <div className="aspect-square relative bg-gray-50 overflow-hidden">
               <Image
-                src={product.imageUrl || "/product-placeholder.png"}
-                alt={product.title}
+                src={product.imageUrl || "/product-placeholder.svg"}
+                alt={product.title || product.name || "Product Image"}
                 fill
                 className="object-cover hover:scale-105 transition-transform duration-300"
               />
