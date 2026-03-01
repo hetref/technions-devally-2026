@@ -1,9 +1,6 @@
-import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
-import { getAuth } from "firebase-admin/auth";
 import admin from "firebase-admin";
 
-// Get Firebase Admin credentials from environment variables
+// Service account credentials
 const serviceAccountConfig = {
   "type": "service_account",
   "project_id": "technions-thikana",
@@ -18,30 +15,11 @@ const serviceAccountConfig = {
   "universe_domain": "googleapis.com"
 };
 
-// Verify required fields exist
-if (!serviceAccountConfig.project_id) {
-  throw new Error(
-    "Service account object must contain a string 'project_id' property."
-  );
-}
-
-if (!serviceAccountConfig.private_key) {
-  throw new Error(
-    "Service account object must contain a string 'private_key' property."
-  );
-}
-
-// Initialize Firebase Admin SDK if not already initialized
-const apps = getApps();
-let app;
-
-if (apps.length > 0) {
-  app = apps[0];
-} else {
+// Initialize Firebase Admin SDK (singleton — handles Next.js HMR re-imports)
+if (!admin.apps.length) {
   try {
-    app = initializeApp({
+    admin.initializeApp({
       credential: admin.credential.cert(serviceAccountConfig),
-      projectId: process.env.FIREBASE_PROJECT_ID,
     });
   } catch (error) {
     console.error("Firebase Admin initialization error:", error);
@@ -49,9 +27,9 @@ if (apps.length > 0) {
   }
 }
 
-// Get Firestore instance
-const adminDb = getFirestore(app);
-const adminAuth = getAuth(app);
+// Get Firestore & Auth instances
+const adminDb = admin.firestore();
+const adminAuth = admin.auth();
 
 export { adminDb, adminAuth };
 export default admin;
