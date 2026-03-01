@@ -144,7 +144,15 @@ export default function ProductDialog({
       handler: async function (response) {
         try {
           // Record the purchase in Firebase
-          await recordPurchase(userId, product.id, quantity, product.price);
+          await recordPurchase(
+            userId, 
+            product.id, 
+            quantity, 
+            product.price, 
+            auth.currentUser?.uid, 
+            response.razorpay_payment_id,
+            businessName
+          );
 
           // Update product quantity in Firebase
           updateProductQuantity(product.id, product.quantity - quantity);
