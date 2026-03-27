@@ -110,7 +110,7 @@ class SpendingInsights:
                 "cheapest_day":     by_day.idxmin(),
                 "priciest_day":     by_day.idxmax(),
                 "day_variance_pct": round(
-                    (by_day.max() - by_day.min()) / by_day.max() * 100, 1
+                    float((by_day.max() - by_day.min()) / by_day.max()) * 100, 1
                 ),
             }
 
@@ -305,7 +305,7 @@ class SpendingInsights:
         if len(monthly) >= 2:
             last     = float(monthly.iloc[-1])
             previous = float(monthly.iloc[-2])
-            change   = round((last - previous) / previous * 100, 1) if previous else 0
+            change   = round(float((last - previous) / previous * 100), 1) if previous else 0.0
             trend    = "increasing" if change > 5 else ("decreasing" if change < -5 else "stable")
         else:
             change = 0.0

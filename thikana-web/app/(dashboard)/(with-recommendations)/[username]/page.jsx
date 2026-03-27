@@ -65,6 +65,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import "leaflet/dist/leaflet.css";
 import Loader from "@/components/Loader";
+import RequestCallButton from "@/components/RequestCallButton";
 
 // Dynamically import Leaflet components to avoid SSR issues
 const MapComponent = dynamic(() => import("@/components/MapComponent"), {
@@ -609,10 +610,12 @@ export default function UserProfile() {
                             <div className="relative px-6 sm:px-8 pb-8 pt-4">
                                 {/* Profile picture positioned over cover image */}
                                 <div
-                                    className={`${isBusinessUser
-                                        ? "absolute -top-12 left-8 z-10"
-                                        : "flex justify-center -mt-12 mb-6"
-                                        }`}
+                                    className={cn(
+                                        "z-40",
+                                        isBusinessUser
+                                            ? "absolute -top-12 left-8"
+                                            : "flex justify-center -mt-12 mb-6 relative"
+                                    )}
                                 >
                                     <Dialog>
                                         <DialogTrigger>
@@ -1212,6 +1215,14 @@ export default function UserProfile() {
                                             </div>
                                         </DialogContent>
                                     </Dialog>
+                                )}
+
+                                {/* Request Call */}
+                                {isBusinessUser && (
+                                    <RequestCallButton 
+                                        businessId={userId} 
+                                        businessName={userData?.businessName || userData?.name} 
+                                    />
                                 )}
 
                                 {/* Location */}

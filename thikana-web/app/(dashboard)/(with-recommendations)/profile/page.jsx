@@ -980,7 +980,7 @@ export default function Profile() {
                                 {/* Profile Card - Enhanced with Fixed Spacing */}
                                 <Card className="overflow-hidden bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-3xl pt-0">
                                     {/* Cover Image with Gradient Overlay */}
-                                    <div className="relative h-48 sm:h-56 lg:h-64 w-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                                    <div className="relative h-48 sm:h-56 lg:h-64 w-full overflow-hidden bg-gray-100 flex items-center justify-center z-0">
                                         {isBusinessUser && (
                                             userData?.coverPic ? (
                                                 <Dialog>
@@ -1052,7 +1052,7 @@ export default function Profile() {
                                                             </AvatarFallback>
                                                         </Avatar>
                                                         {/* Subtle hover ring */}
-                                                        <div className="absolute inset-0 rounded-full bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                                        <div className="absolute inset-0 rounded-full bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-100" />
                                                     </div>
                                                 </DialogTrigger>
                                                 <DialogContent className="sm:max-w-md">
@@ -2302,6 +2302,16 @@ export default function Profile() {
                                             <Link href={`/websites`}>
                                                 <Globe className="w-4 h-4" />
                                                 Build Website
+                                            </Link>
+                                        </Button>
+                                         <Button
+                                            asChild
+                                            variant="outline"
+                                            className="w-full justify-start gap-3 py-3 h-auto rounded-2xl border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                                        >
+                                            <Link href={`/profile/calls`}>
+                                                <Globe className="w-4 h-4" />
+                                                Manage AI Calls
                                             </Link>
                                         </Button>
 

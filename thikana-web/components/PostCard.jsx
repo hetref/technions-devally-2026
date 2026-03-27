@@ -453,10 +453,10 @@ function PostCard({ post, onView, showDistance, distanceText, compact = false })
               </div>
               <div>
                 <p className="font-bold text-lg text-gray-800">
-                  {post?.authorName || "Anonymous"}
+                  {post?.authorName || "DevOutlooks"}
                 </p>
                 <p className="text-sm text-gray-600 font-medium">
-                  Product Designer, slothUI
+                  {post?.authorUsername}
                 </p>
                 {isPostOwner && (
                   <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full font-semibold">
@@ -623,7 +623,7 @@ function PostCard({ post, onView, showDistance, distanceText, compact = false })
                 <div className="flex items-center gap-3">
                   <Share2 className="w-6 h-6 text-gray-600 group-hover:text-green-500 transition-all duration-300 group-hover:scale-110" />
                   <span className="font-semibold text-gray-700 group-hover:text-green-500">
-                    187 Share
+                    0 Share
                   </span>
                 </div>
               </Button>

@@ -81,7 +81,7 @@ def _compute_monthly_income(income_entries: list[dict]) -> float:
     if not income_entries:
         return 0.0
 
-    monthly_totals: dict[str, float] = defaultdict(float)
+    monthly_totals: defaultdict[str, float] = defaultdict(float)
     for entry in income_entries:
         ts = entry.get("timestamp", "")
         amt = float(entry.get("amount", 0) or 0)
@@ -290,12 +290,12 @@ def get_full_analysis(user_id: str):
     of how many models run.
     """
     try:
-        # ── 2 Firestore reads total ───────────────────────────────────────────
+        # ── Fetch Firestore data sequentially ─────────────────────────────────
         transactions   = _get_transactions(user_id)
         income_entries = _get_income(user_id)
         monthly_income = _compute_monthly_income(income_entries)
 
-        # ── Run all 4 models in memory (zero additional DB reads) ─────────────
+        # ── Run all 4 models sequentially (zero additional DB reads) ──────────
         anomaly_result  = _detector.detect(transactions, user_id)
         insights_result = _insights.analyze(transactions, user_id)
         rec_result      = _recommender.recommend(transactions, user_id, monthly_income)
@@ -342,6 +342,26 @@ def get_full_analysis(user_id: str):
             "total_entries": len(income_entries),
         }
 
+        # ── Build expense summary inline ──────────────────────────────────────
+        e_monthly: defaultdict = defaultdict(lambda: {"total": 0.0, "count": 0})
+        for txn in transactions:
+            amt = float(txn.get("amount", 0) or 0)
+            ts_raw = txn.get("timestamp", "")
+            try:
+                dt  = datetime.fromisoformat(str(ts_raw).replace(" ", "T").rstrip("Z"))
+                key = f"{dt.year}-{dt.month:02d}"
+            except Exception:
+                key = "Unknown"
+            e_monthly[key]["total"] += amt
+            e_monthly[key]["count"] += 1
+
+        expense_summary = {
+            "monthly_breakdown": sorted(
+                [{"month": k, "total": round(v["total"], 2)} for k, v in e_monthly.items() if k != "Unknown"],
+                key=lambda x: x["month"],
+            )
+        }
+
         return {
             "user_id":         user_id,
             "anomalies":       anomaly_result,
@@ -349,6 +369,7 @@ def get_full_analysis(user_id: str):
             "recommendations": rec_result,
             "predictions":     pred_result,
             "income_summary":  income_summary,
+            "expense_summary": expense_summary,
         }
 
     except Exception as e:
